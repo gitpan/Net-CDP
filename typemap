@@ -1,0 +1,29 @@
+TYPEMAP
+Net_CDP	T_PTROBJ_SPECIAL
+Net_CDP_Packet	T_PTROBJ_SPECIAL
+Net_CDP_Address	T_PTROBJ_SPECIAL
+Net_CDP_Address *	T_ARRAY
+Net_CDP_IPPrefix	T_PTROBJ_SPECIAL
+Net_CDP_IPPrefix *	T_ARRAY
+
+u_int8_t	T_UV
+u_int16_t	T_UV
+u_int32_t	T_UV
+
+const char *	T_PV
+
+charPtr	T_PV
+char **	T_ARRAY
+
+INPUT
+T_PTROBJ_SPECIAL
+	if (sv_derived_from($arg, \"${(my $ntt=$ntype)=~s/_/::/g;\$ntt}\")) {
+		IV tmp = SvIV((SV*)SvRV($arg));
+		$var = ($type) tmp;
+	} else
+		croak(\"$var is not of type ${(my $ntt=$ntype)=~s/_/::/g;\$ntt}\")
+
+OUTPUT
+T_PTROBJ_SPECIAL
+	sv_setref_pv($arg, \"${(my $ntt=$ntype)=~s/_/::/g;\$ntt}\", (void*)$var);
+

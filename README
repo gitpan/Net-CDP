@@ -1,0 +1,65 @@
+Net-CDP
+=======
+
+The Net::CDP module implements an advertiser/listener for the Cisco
+Discovery Protocol (CDP).
+
+CDP is a proprietary Cisco protocol for discovering devices on a network.
+A typical CDP implementation sends periodic CDP packets on every network
+interface and listens for advertisements sent by neighboring devices.
+
+Prerequisites
+-------------
+
+- Libnet 1.1.0 or later (http://www.packetfactory.net/Projects/Libnet/)
+  To use a loopback interface (for testing, for instance) you will need
+  version 1.1.1 or later.
+- libpcap 0.6 or later
+
+For testing, you will require Test::More, and (optionally) Test::Pod.
+
+Installation
+------------
+
+To install this module type the following:
+
+   perl Makefile.PL
+   make
+   make test
+   make install
+
+To test all features, 'make test' needs to be run with superuser privileges.
+
+Usage
+-----
+
+'perldoc Net::CDP' for complete usage instructions.
+
+The following is a simple CDP advertiser/listener script:
+
+  use Net::CDP::Manager;
+
+  # Callback to process each packet.
+  sub callback {
+    my ($packet, $port) = @_;
+    print "Received packet on $port from ", $packet->device, "\n";
+  }
+
+  # Manage all available ports.
+  cdp_manage(cdp_ports);
+
+  # Send a packet every minute. Pass received packets to callback.
+  while (1) {
+    cdp_send;
+    cdp_loop(\&callback, 60);
+  }
+
+Copyright and License
+---------------------
+
+Copyright (C) 2004 by Michael Chapman
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+$Id: README,v 1.1.1.1 2004/06/04 06:01:29 mchapman Exp $
