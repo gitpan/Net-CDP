@@ -13,11 +13,26 @@ use lib 'blib/arch';
 use lib 'blib/lib';
 
 use Net::CDP::Manager;
+use Net::CDP::Packet qw(:caps);
 
-sub pretty { defined $_[0] ? @_ : '(undef)' }
-sub duplex { defined $_[0] ? ($_[0] ? 'full' : 'half') : '(unknown)' }
+sub pretty { defined $_[0] ? @_ : '(unspecified)' }
+sub duplex { defined $_[0] ? ($_[0] ? 'full' : 'half') : '(unspecified)' }
+sub trust { defined $_[0] ? ($_[0] ? 'trusted' : 'untrusted') : '(unspecified)' }
+sub voice_vlan { defined $_[0] ? "Appliance $_[1], VLAN $_[0]" : '(unspecified)' }
 sub hexify { join ' ', map { map { sprintf '0x%02x', ord } split // } @_ }
-sub binarize { unpack "B8", pack "C", shift }
+sub caps {
+	my $caps = shift;
+	my %map = (
+		CDP_CAP_ROUTER()             => 'Router',
+		CDP_CAP_TRANSPARENT_BRIDGE() => 'Transparent bridge',
+		CDP_CAP_SOURCE_BRIDGE()      => 'Source route bridge',
+		CDP_CAP_SWITCH()             => 'Switch',
+		CDP_CAP_HOST()               => 'Host',
+		CDP_CAP_IGMP()               => 'IGMP capable',
+		CDP_CAP_REPEATER()           => 'Repeater',
+	);
+	join ', ', @map{sort grep { $caps & $_ } keys %map}
+}
 
 sub callback {
 	my ($packet, $port) = @_;
@@ -35,10 +50,10 @@ sub callback {
 			print '    Address: ', pretty($_->address), "\n";
 		}
 	} else {
-		print "  Addresses: (none)\n";
+		print "  Addresses: (unspecified)\n";
 	}
 	print '  Port ID: ', pretty($packet->port), "\n";
-	print '  Capabilities: ', binarize($packet->capabilities), "\n";
+	print '  Capabilities: ', caps($packet->capabilities), "\n";
 	print '  IOS Version: ', pretty($packet->ios_version), "\n"; 
 	print '  Platform: ', pretty($packet->platform), "\n";
 	if ($packet->ip_prefixes) {
@@ -48,11 +63,15 @@ sub callback {
 			print '    Length: ', pretty($_->length), "\n";
 		}
 	} else {
-		print "  IP Prefixes: (none)\n";
+		print "  IP Prefixes: (unspecified)\n";
 	}
 	print '  VTP Management Domain: ', pretty($packet->vtp_management_domain), "\n";
 	print '  Native VLAN: ', pretty($packet->native_vlan), "\n";
 	print '  Duplex: ', duplex($packet->duplex), "\n";
+	print '  Voice VLAN: ', voice_vlan($packet->voice_vlan), "\n";
+	print '  MTU: ', pretty($packet->mtu), "\n";
+	print '  Extended Trust: ', trust($packet->trusted), "\n";
+	print '  COS for Untrusted ports: ', pretty($packet->untrusted_cos), "\n";
 	print "\n";
 }
 

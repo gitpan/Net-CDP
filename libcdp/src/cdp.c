@@ -1,27 +1,54 @@
 /*
- * $Id: cdp.c,v 1.2 2004/06/10 11:40:56 mchapman Exp $
+ * $Id: cdp.c,v 1.2 2004/09/02 11:49:23 mchapman Exp $
  */
+
+#include <config.h>
 
 #include "cdp.h"
 
-#include <stdio.h>
-#include <sys/time.h>
+#ifdef HAVE_STDIO_H
+# include <stdio.h>
+#endif /* HAVE_STDIO_H */
 
-#ifndef HAVE_RECENT_PCAP
-#include <net/if.h>
-#include <fcntl.h>
-#include <errno.h>
-#endif /* !HAVE_RECENT_PCAP */
+#ifdef HAVE_SYS_TIME_H
+# include <sys/time.h>
+#endif /* HAVE_SYS_TIME_H */
 
-#include <sys/socket.h>
-#include <features.h>    /* for the glibc version number */
-#if __GLIBC__ >= 2 && __GLIBC_MINOR__ >= 1
-#include <netpacket/packet.h>
-#include <net/ethernet.h>     /* the L2 protocols */
-#else
-#include <asm/types.h>
-#include <linux/if_packet.h>
-#include <linux/if_ether.h>   /* The L2 protocols */
+#ifdef HAVE_SYS_SOCKET_H
+# include <sys/socket.h>
+#endif /* HAVE_SYS_SOCKET_H */
+
+#ifdef HAVE_NET_IF_H
+# include <net/if.h>
+#endif /* HAVE_NET_IF_H */
+
+#ifdef HAVE_SYS_IOCTL_H
+# include <sys/ioctl.h>
+#endif /* HAVE_SYS_IOCTL_H */
+
+#ifdef HAVE_ETHTOOL_H
+# include <linux/ethtool.h>
+# include <linux/sockios.h>
+#endif /* HAVE_ETHTOOL_H */
+
+#ifdef HAVE_NETINET_IF_ETHER_H
+# include <netinet/if_ether.h>
+#endif /* HAVE_NETINET_IF_ETHER_H */
+
+#ifndef HAVE_PCAP_SETNONBLOCK
+# ifdef HAVE_FCNTL_H
+#  include <fcntl.h>
+# endif /* HAVE_FCNTL_H */
+#endif /* !HAVE_PCAP_SETNONBLOCK */
+
+#ifdef HAVE_ERRNO_H
+# include <errno.h>
+#endif /* HAVE_ERRNO_H */
+
+#ifdef HAVE_MULTICAST
+# ifdef HAVE_NETPACKET_PACKET_H
+#  include <netpacket/packet.h>
+# endif /* HAVE_NETPACKET_PACKET_H */
 #endif
 
 #include "cdp_encoding.h"
@@ -42,6 +69,8 @@ callback(u_int8_t *user, const struct pcap_pkthdr *header, const u_int8_t *data)
 	cdp->data = data;
 }
 
+#ifdef HAVE_MULTICAST
+
 static int
 multicast(const cdp_t *cdp, int add) {
 	int result;
@@ -49,8 +78,12 @@ multicast(const cdp_t *cdp, int add) {
 	struct ifreq ifr;
 	struct packet_mreq mreq;
 	
+	if (!cdp->pcap)
+		return -1;
+	
 	memset(&ifr, 0, sizeof(struct ifreq));
-	memcpy(ifr.ifr_name, cdp->port, sizeof ifr.ifr_name);
+	strncpy(ifr.ifr_name, cdp->port, sizeof ifr.ifr_name - 1);
+	ifr.ifr_name[sizeof ifr.ifr_name - 1] = '\0';
 	result = ioctl(pcap_fileno(cdp->pcap), SIOCGIFINDEX, &ifr);
 	
 	if (result < 0)
@@ -60,6 +93,7 @@ multicast(const cdp_t *cdp, int add) {
 	mreq.mr_type = PACKET_MR_MULTICAST;
 	mreq.mr_alen = 6;
 	memcpy(mreq.mr_address, cdp_multicast_mac, 6);
+	mreq.mr_address[6] = mreq.mr_address[7] = '\0';
 	return setsockopt(
 		pcap_fileno(cdp->pcap),
 		SOL_PACKET,
@@ -69,36 +103,44 @@ multicast(const cdp_t *cdp, int add) {
 	);
 }
 
-#ifdef HAVE_RECENT_PCAP
-		
-cdp_llist_t *
-cdp_get_ports(char *errors) {
-	char *pcap_errors;
+#else /* HAVE_MULTICAST */
+
+static int multicast(const cdp_t *cdp, int add) { return 1; }
+
+#endif /* !HAVE_MULTICAST */
+
+#ifdef HAVE_ETHTOOL_H
+
+static void
+duplex(cdp_t *cdp) {
+	int result, fd;
+	struct ifreq ifr;
+	struct ethtool_cmd ecmd;
 	
-	struct pcap_if *devs, *d;
-	cdp_llist_t *result;
+	if (cdp->flags & CDP_DISABLE_SEND) {
+		fd = socket(AF_INET, SOCK_DGRAM, 0);
+		if (fd < 0)
+			return;
+	} else
+		fd = libnet_getfd(cdp->libnet);
 	
-	/*
-	 * pcap has a handy find all devices function. We don't want the
-	 * "any" device though.
-	 */
-	pcap_errors = (char *)calloc(PCAP_ERRBUF_SIZE, sizeof(char));
-	if (pcap_findalldevs(&devs, pcap_errors) == -1) {
-		strncpy(errors, pcap_errors, (CDP_ERRBUF_SIZE - 1) * sizeof(char));
-		errors[CDP_ERRBUF_SIZE - 1] = '\0';
-		free(pcap_errors);
-		return NULL;
+	memset(&ifr, 0, sizeof(struct ifreq));
+	strncpy(ifr.ifr_name, cdp->port, sizeof ifr.ifr_name - 1);
+	ifr.ifr_name[sizeof ifr.ifr_name - 1] = '\0';
+	ifr.ifr_data = (caddr_t)&ecmd;
+	ecmd.cmd = ETHTOOL_GSET;
+	result = ioctl(fd, SIOCETHTOOL, &ifr);
+	
+	if (result >= 0) {
+		if (!cdp->duplex) cdp->duplex = (u_int8_t *)calloc(1, sizeof(u_int8_t));
+		*cdp->duplex = (ecmd.duplex == DUPLEX_FULL ? 1 : 0);
 	}
-	result = cdp_llist_new((cdp_dup_fn_t)strdup, (cdp_free_fn_t)free);
-	for (d = devs; d; d = d->next)
-		if (strcmp(d->name, "any"))
-			cdp_llist_append(result, d->name);
-	pcap_freealldevs(devs);
-	free(pcap_errors);
-	return result;
+
+	if (cdp->flags & CDP_DISABLE_SEND)
+		close(fd);
 }
 
-#else /* HAVE_RECENT_PCAP */
+#endif /* HAVE_ETHTOOL_H */
 
 cdp_llist_t *
 cdp_get_ports(char *errors) {
@@ -109,6 +151,7 @@ cdp_get_ports(char *errors) {
 	struct ifconf ifc;
 	struct ifreq ifrflags, *ifr, *last;
 	char *buf;
+	int linktype;
 	pcap_t *pcap;
 	libnet_t *libnet;
 	cdp_llist_t *normal_list, *loopback_list;
@@ -221,10 +264,18 @@ cdp_get_ports(char *errors) {
 		 * Open with the minimum packet size - it appears that the
 		 * IRIX SIOCSNOOPLEN "ioctl" may fail if the capture length
 		 * supplied is too large, rather than just truncating it.
+		 * Also grab the data link type here.
 		 */
 		if (!(pcap = pcap_open_live(ifr->ifr_name, 68, 0, 0, pcap_errors)))
 			continue;
+		linktype = pcap_datalink(pcap);
 		pcap_close(pcap);
+
+		/*
+		 * Skip interfaces where we can't use ethernet addresses.
+		 */
+		if (!(linktype == DLT_EN10MB || linktype == DLT_FDDI || linktype == DLT_IEEE802))
+			continue;
 
 		/*
 		 * Also skip interfaces that we can't be open with "libnet".
@@ -255,8 +306,6 @@ cdp_get_ports(char *errors) {
 	return normal_list;
 }
 
-#endif /* !HAVE_RECENT_PCAP */
-
 cdp_t *
 cdp_new(const char *port, int flags, char *errors) {
 	cdp_t *cdp;
@@ -270,7 +319,7 @@ cdp_new(const char *port, int flags, char *errors) {
 	bpf_u_int32 net;
 	struct bpf_program filter;
 	struct libnet_ether_addr *hwaddr;
-
+	
 	pcap_errors = (char *)calloc(PCAP_ERRBUF_SIZE, sizeof(char));
 	libnet_errors = (char *)calloc(LIBNET_ERRBUF_SIZE, sizeof(char));
 
@@ -279,75 +328,6 @@ cdp_new(const char *port, int flags, char *errors) {
 	cdp = (cdp_t *)calloc(1, sizeof(cdp_t));
 	cdp->flags = flags;
 	
-#ifdef HAVE_RECENT_PCAP
-	{
-		struct pcap_if *devs, *d, *selected;
-		struct pcap_addr *pcap_address;
-
-		/*
-		 * If a port was specified, we make sure it's valid.
-		 * Otherwise just grab the first non-"any" port.
-		 */
-		if (pcap_findalldevs(&devs, pcap_errors) == -1) {
-			strncpy(errors, pcap_errors, (CDP_ERRBUF_SIZE - 1) * sizeof(char));
-			errors[CDP_ERRBUF_SIZE - 1] = '\0';
-			goto fail;
-		}
-
-		selected = NULL;
-		for (d = devs; !selected && d; d = d->next)
-			if (strcmp(d->name, "any") &&
-				(!port ||
-					(strcmp(d->name, port) == 0)
-				)
-			)
-				selected = d;	
-		if (!selected) {
-			if (port)
-				sprintf(errors, "Port %s not found", port);
-			else
-				strcpy(errors, "No available ports found");
-			pcap_freealldevs(devs);
-			goto fail;
-		}
-
-		cdp->port = strdup(selected->name);
-		cdp->addresses = cdp_llist_new(
-			(cdp_dup_fn_t)cdp_address_dup,
-			(cdp_free_fn_t)cdp_address_free
-		);
-
-		for (pcap_address = selected->addresses; pcap_address; pcap_address = pcap_address->next) {
-			address = NULL;
-			switch (pcap_address->addr->sa_family) {
-			case AF_INET:
-				address = cdp_address_new(
-					cdp_address_protocol_type[CDP_ADDR_PROTO_IPV4],
-					cdp_address_protocol_length[CDP_ADDR_PROTO_IPV4],
-					cdp_address_protocol[CDP_ADDR_PROTO_IPV4],
-					sizeof(((struct sockaddr_in *)pcap_address->addr)->sin_addr),
-					(u_int8_t *)&((struct sockaddr_in *)pcap_address->addr)->sin_addr
-				);
-				break;
-			case AF_INET6:
-				address = cdp_address_new(
-					cdp_address_protocol_type[CDP_ADDR_PROTO_IPV6],
-					cdp_address_protocol_length[CDP_ADDR_PROTO_IPV6],
-					cdp_address_protocol[CDP_ADDR_PROTO_IPV6],
-					sizeof(((struct sockaddr_in6 *)pcap_address->addr)->sin6_addr),
-					(u_int8_t *)&((struct sockaddr_in6 *)pcap_address->addr)->sin6_addr
-				);
-				break;
-			}
-			if (address) {
-				cdp_llist_append(cdp->addresses, address);
-				cdp_address_free(address);
-			}
-		}
-
-		pcap_freealldevs(devs);
-	}
-#else /* !HAVE_RECENT_PCAP */
 	{
 		int sock;
 		struct ifreq ifrflags;
@@ -423,7 +403,6 @@ cdp_new(const char *port, int flags, char *errors) {
 			cdp_address_free(address);
 		}
 	}
-#endif /* !HAVE_RECENT_PCAP */
 	
 	if (pcap_lookupnet(cdp->port, &net, &mask, pcap_errors) == -1) {
 		strncpy(errors, pcap_errors, CDP_ERRBUF_SIZE - 1);
@@ -431,58 +410,71 @@ cdp_new(const char *port, int flags, char *errors) {
 		goto fail;
 	}
 	
-	if (!(cdp->pcap = pcap_open_live(cdp->port, BUFSIZ,
-				cdp->flags & CDP_PROMISCUOUS, 0, pcap_errors))) {
-		strncpy(errors, pcap_errors, CDP_ERRBUF_SIZE - 1);
-		errors[CDP_ERRBUF_SIZE - 1] = '\0';
-		goto fail;
-	}
-	if (!(cdp->flags & CDP_PROMISCUOUS)) {
-		if (multicast(cdp, 1) < 0) {
-			snprintf(errors, (CDP_ERRBUF_SIZE - 1) * sizeof(char),
-				"Could not enable multicast address for interface %s: %s",
-				cdp->port, strerror(errno));
+	if (!(cdp->flags & CDP_DISABLE_RECV)) {
+		if (!(cdp->pcap = pcap_open_live(cdp->port, BUFSIZ,
+					cdp->flags & CDP_PROMISCUOUS, 0, pcap_errors))) {
+			strncpy(errors, pcap_errors, CDP_ERRBUF_SIZE - 1);
 			errors[CDP_ERRBUF_SIZE - 1] = '\0';
 			goto fail;
 		}
-	}
-	
-	if (pcap_compile(cdp->pcap, &filter, BPF_FILTER, 1, mask)) {
-		strncpy(errors, pcap_geterr(cdp->pcap), CDP_ERRBUF_SIZE - 1);
-		errors[CDP_ERRBUF_SIZE - 1] = '\0';
-		goto fail_multi;
-	}
-	
-	if (pcap_setfilter(cdp->pcap, &filter)) {
-		strncpy(errors, pcap_geterr(cdp->pcap), CDP_ERRBUF_SIZE - 1);
-		errors[CDP_ERRBUF_SIZE - 1] = '\0';
-		pcap_freecode(&filter);
-		goto fail_multi;
-	}
-	pcap_freecode(&filter);
-	
-	if (!(cdp->libnet = libnet_init(LIBNET_LINK, cdp->port, libnet_errors))) {
-		strncpy(errors, libnet_errors, CDP_ERRBUF_SIZE - 1);
-		errors[CDP_ERRBUF_SIZE - 1] = '\0';
-		goto fail_multi;
-	}
+		if (!(cdp->flags & CDP_PROMISCUOUS)) {
+			if (multicast(cdp, 1) < 0) {
+				snprintf(errors, (CDP_ERRBUF_SIZE - 1) * sizeof(char),
+					"Could not enable multicast address for interface %s: %s",
+					cdp->port, strerror(errno));
+				errors[CDP_ERRBUF_SIZE - 1] = '\0';
+				goto fail;
+			}
+		}
 
-	/*
-	 * Save the hardware address for when cdp_send is called.
-	 */
-	if (!(hwaddr = libnet_get_hwaddr(cdp->libnet))) {
-		strncpy(errors, libnet_geterror(cdp->libnet), CDP_ERRBUF_SIZE - 1);
-		errors[CDP_ERRBUF_SIZE - 1] = '\0';
-		goto fail_multi;
+		if (pcap_compile(cdp->pcap, &filter, BPF_FILTER, 1, mask)) {
+			strncpy(errors, pcap_geterr(cdp->pcap), CDP_ERRBUF_SIZE - 1);
+			errors[CDP_ERRBUF_SIZE - 1] = '\0';
+			goto fail_multi;
+		}
+
+		if (pcap_setfilter(cdp->pcap, &filter)) {
+			strncpy(errors, pcap_geterr(cdp->pcap), CDP_ERRBUF_SIZE - 1);
+			errors[CDP_ERRBUF_SIZE - 1] = '\0';
+			pcap_freecode(&filter);
+			goto fail_multi;
+		}
+		pcap_freecode(&filter);
 	}
-	memcpy(cdp->mac, hwaddr->ether_addr_octet, 6 * sizeof(u_int8_t));
+	
+	if (!(cdp->flags & CDP_DISABLE_SEND)) {
+		if (!(cdp->libnet = libnet_init(LIBNET_LINK, cdp->port, libnet_errors))) {
+			strncpy(errors, libnet_errors, CDP_ERRBUF_SIZE - 1);
+			errors[CDP_ERRBUF_SIZE - 1] = '\0';
+			goto fail_multi;
+		}
+
+		/*
+		 * Save the hardware address for when cdp_send is called.
+		 */
+		if (!(hwaddr = libnet_get_hwaddr(cdp->libnet))) {
+			strncpy(errors, libnet_geterror(cdp->libnet), CDP_ERRBUF_SIZE - 1);
+			errors[CDP_ERRBUF_SIZE - 1] = '\0';
+			goto fail_multi;
+		}
+		memcpy(cdp->mac, hwaddr->ether_addr_octet, 6 * sizeof(u_int8_t));
+	}
+	
+#ifdef HAVE_ETHTOOL_H
+	/*
+	 * Grab the duplex mode of the interface now.
+	 */
+	duplex(cdp);
+#endif /* HAVE_ETHTOOL_H */
 	
 	free(libnet_errors);
 	free(pcap_errors);
 	return cdp;
 
 fail_multi:
-	if (!(cdp->flags & CDP_PROMISCUOUS)) multicast(cdp, 0); /* Ignore errors */
+	if (!(cdp->flags & CDP_DISABLE_RECV))
+		if (!(cdp->flags & CDP_PROMISCUOUS))
+			multicast(cdp, 0); /* Ignore errors */
 	
 fail:
 	cdp_free(cdp);
@@ -493,13 +485,16 @@ fail:
 
 void
 cdp_free(cdp_t *cdp) {
+	if (cdp->port) {
+		if (!(cdp->flags & CDP_DISABLE_RECV))
+			if (!(cdp->flags & CDP_PROMISCUOUS))
+				multicast(cdp, 0); /* Ignore errors */
+		free(cdp->port);
+	}
 	if (cdp->libnet) libnet_destroy(cdp->libnet);
 	if (cdp->pcap) pcap_close(cdp->pcap);
 	if (cdp->addresses) cdp_llist_free(cdp->addresses);
-	if (cdp->port) {
-		multicast(cdp, 0); /* Ignore errors */
-		free(cdp->port);
-	}
+	if (cdp->duplex) free(cdp->duplex);
 	free(cdp);
 }
 
@@ -513,9 +508,14 @@ cdp_get_addresses(cdp_t *cdp) {
 	return cdp->addresses;
 }
 
+const u_int8_t *
+cdp_get_duplex(cdp_t *cdp) {
+	return cdp->duplex;
+}
+
 int
 cdp_get_fd(cdp_t *cdp) {
-	return pcap_fileno(cdp->pcap);
+	return cdp->flags & CDP_DISABLE_RECV ? -1 : pcap_fileno(cdp->pcap);
 }
 
 static void
@@ -542,10 +542,15 @@ cdp_recv(cdp_t *cdp, int flags, char *errors) {
 	char *pcap_errors;
 	struct cdp_packet *packet;
 	
+	if (cdp->flags & CDP_DISABLE_RECV) {
+		sprintf(errors, "Can not receive with CDP_DISABLE_RECV set");
+		return NULL;
+	}
+	
 	pcap_errors = (char *)calloc(PCAP_ERRBUF_SIZE, sizeof(char));
 	packet = NULL;
 	
-#ifdef HAVE_RECENT_PCAP
+#if HAVE_RECENT_PCAP
 	if (pcap_setnonblock(cdp->pcap, flags & CDP_RECV_NONBLOCK, pcap_errors)) {
 		strncpy(errors, pcap_errors, (CDP_ERRBUF_SIZE - 1) * sizeof(char));
 		errors[CDP_ERRBUF_SIZE - 1] = '\0';
@@ -589,8 +594,7 @@ cdp_recv(cdp_t *cdp, int flags, char *errors) {
 			goto fail;
 		}
 		if (result) {
-			packet = cdp_decode(cdp->data, cdp->header->caplen,
-				errors);
+			packet = cdp_decode(cdp->data, cdp->header->caplen, errors);
 			if ((flags & CDP_RECV_DECODE_ERRORS) && !packet)
 				goto fail; /* errors is already set */
 		} else if (flags & CDP_RECV_NONBLOCK)
@@ -611,6 +615,11 @@ cdp_send(cdp_t *cdp, const struct cdp_packet *packet, char *errors) {
 	static u_int8_t oui[3] = { 0x00, 0x00, 0x0c };
 	
 	int result;
+	
+	if (cdp->flags & CDP_DISABLE_SEND) {
+		sprintf(errors, "Can not send with CDP_DISABLE_SEND set");
+		return -1;
+	}
 
 	if (libnet_build_data(
 			(packet->packet_length ? packet->packet : NULL), packet->packet_length,

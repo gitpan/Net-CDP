@@ -1,20 +1,20 @@
 package Net::CDP;
 
 #
-# $Id: CDP.pm,v 1.6 2004/06/23 10:03:44 mchapman Exp $
+# $Id: CDP.pm,v 1.17 2004/09/02 05:42:58 mchapman Exp $
 #
 
 use 5.00503;
 use strict;
-use Carp;
+use Carp::Clan qw(^Net::CDP);
 
-use vars qw($VERSION @ISA $AUTOLOAD @EXPORT @EXPORT_OK %EXPORT_TAGS);
+use vars qw($VERSION $XS_VERSION @ISA $AUTOLOAD @EXPORT @EXPORT_OK %EXPORT_TAGS @EXPORT_FAIL);
 
-$VERSION = '0.06';
+$VERSION = (qw$Revision: 1.17 $)[1];
+$XS_VERSION = '0.07'; # XXX Keep this in sync with libcdp
 
 require Exporter;
 require DynaLoader;
-use AutoLoader;
 @ISA = qw(Exporter DynaLoader);
 
 my @EXPORT_GENERAL = qw(
@@ -34,198 +34,69 @@ my @EXPORT_PROTOS = qw(
 );
 
 @EXPORT = qw();
-@EXPORT_OK = (@EXPORT_GENERAL, @EXPORT_RECV, @EXPORT_CAPS, @EXPORT_PROTOS, );
+@EXPORT_OK = (@EXPORT_CAPS, @EXPORT_PROTOS, @EXPORT_GENERAL, @EXPORT_RECV, );
 %EXPORT_TAGS = (
 	general => [ @EXPORT_GENERAL, ],
 	recv => [ @EXPORT_RECV, ],
 	caps => [ @EXPORT_CAPS, ],
 	protos => [ @EXPORT_PROTOS, ],
-);	
+);
+@EXPORT_FAIL = (@EXPORT_OK, );
 
 sub AUTOLOAD {
 	my $constname;
 	($constname = $AUTOLOAD) =~ s/.*:://;
-	croak "&Net::CDP::constant not defined" if $constname eq 'constant';
-	my ($error, $val) = constant($constname);
-	unless ($error) {
-		no strict 'refs';
-		*$AUTOLOAD = sub { $val };
-		goto &$AUTOLOAD;
-	}
-	$AutoLoader::AUTOLOAD = $AUTOLOAD;
-	goto &AutoLoader::AUTOLOAD;
+	croak '&Net::CDP::constant not defined' if $constname eq 'constant';
+	my ($error, $val) = Net::CDP::Constants::constant($constname);
+	croak $error if $error;
+	
+	no strict 'refs';
+	*$AUTOLOAD = sub { $val };
+	goto &$AUTOLOAD;
 }
 
-bootstrap Net::CDP $VERSION;
+# If you REALLY need the warnings suppressed, set this to 0
+use vars qw($warn_deprecated);
+$warn_deprecated = 1;
+
+{
+	my $warned;
+	sub _deprecated() {
+		return unless $warn_deprecated;
+		return if $warned;
+		$warned = 1;
+		warn <<EOF;
+**********************************************************
+*** You're using a deprecated interface! Check out the ***
+*** Net::CDP documentation for more info.              ***
+**********************************************************
+EOF
+	}
+}
+
+sub export_fail(@) {
+	my $self = shift;
+	_deprecated;
+	();
+}
+
+bootstrap Net::CDP $XS_VERSION;
 
 # Load in the Perl part of the Net::CDP::Address
 # and Net::CDP::IPPrefix namespaces
 require Net::CDP::Address;
 require Net::CDP::IPPrefix;
 
-1;
-__END__
-
-=head1 NAME
-
-Net::CDP - Cisco Discovery Protocol (CDP) advertiser/listener
-
-=head1 SYNOPSIS
-
-  use Net::CDP qw(:caps :protos);
-
-  # Available ports (interfaces)
-  @ports = Net::CDP::ports;  
-
-  # Creating a CDP advertiser/listener
-  $cdp = new Net::CDP;
-
-  # Receiving a CDP packet
-  $packet = $cdp->recv;
-  
-  # Sending a CDP packet
-  $cdp->send($packet);
-  
-  # Other Net::CDP methods
-  $port = $cdp->port;
-  @addresses = $cdp->addresses;
-
-=head1 DESCRIPTION
-
-The Net::CDP module implements an advertiser/listener for the Cisco
-Discovery Protocol.
-
-CDP is a proprietary Cisco protocol for discovering devices on a network. A
-typical CDP implementation sends periodic CDP packets on every network
-interface. It might also listen for packets for advertisements sent by
-neighboring devices.
-
-A Net::CDP object represents an advertiser/listener for a single network
-port. It can send and receive individual CDP packets, each represented by a
-L<Net::CDP::Packet> object.
-
-=head1 CONSTRUCTORS
-
-=over
-
-=item B<new>
-
-    $cdp = new Net::CDP()
-    $cdp = new Net::CDP($port)
-    $cdp = new Net::CDP($port, $flags)
-
-Returns a new Net::CDP object.
-
-If specified, C<$port> must be the name of the network port (interface) that
-should be used to send and receive packets. If ommitted, the first interface on
-your system is used (typically, this is the first Ethernet device -- "eth0", for
-instance).
-
-You can use the L</"ports"> class method to retrieve a list of valid port names.
-
-If specified, C<$flags> is a bitmask specifying one or more of the following
-constants:
-
-=over
-
-=item CDP_PROMISCUOUS
-
-Enable promiscuous mode on the specified device. If this is not specified,
-Net::CDP attempts to use a multicast ethernet address instead, which may not
-work on some interfaces.
-
-=back
-
-These constants can be exported from Net::CDP using the tag C<:general>. See
-L<Exporter>.
-
-=back
-
-=head1 CLASS METHODS
-
-=over 
-
-=item B<ports>
-
-    @ports = Net::CDP::ports()
-
-Returns a list of network ports (interfaces) that can be used by this module.
-
-=back
-
-=head1 OBJECT METHODS
-
-=over
-
-=item B<port>
-
-    $port = $cdp->port()
-
-Returns the network port (interface) associated with this Net::CDP object.
-
-=item B<addresses>
-
-    @addresses = $cdp->addresses()
-
-Returns the addresses of the network port (interface) associated with this
-Net::CDP object. In scalar context the number of addresses is returned.
-
-I<NOTE:> Currently only a single IPv4 address is returned, even if the interface
-has more than one bound address.
-
-=item B<recv>
-
-    $packet = $cdp->recv()
-    $packet = $cdp->recv($flags)
-
-Returns the next available CDP packet as a L<Net::CDP::Packet> object. If the
-CDP_RECV_NONBLOCK flag is set, an undefined value returned if no packets are
-immediately available. Otherwise, this method blocks until a packet is received
-or an error occurs. If an error occurs, this method croaks.
-
-If specified, C<$flags> is a bitmask specifying one or more of the following
-constants:
-
-=over
-
-=item CDP_RECV_NONBLOCK
-
-Do not block if no CDP packets are immediately available.
-
-=item CDP_RECV_DECODE_ERRORS
-
-Decoding errors will result in C<recv> croaking.
-
-=back
-
-These constants can be exported from Net::CDP using the tag C<:recv>. See
-L<Exporter>.
-
-=item B<send>
-
-    $bytes = $cdp->send($packet)
-
-Transmits the specified packet, which must be a L<Net::CDP::Packet> object,
-and returns the number of bytes sent. If an error occurs, this method croaks.
-
-=back
-
-=head1 SEE ALSO
-
-L<Net::CDP::Packet>
-
-=head1 AUTHOR
-
-Michael Chapman, E<lt>cpan@very.puzzling.orgE<gt>
-
-=head1 COPYRIGHT AND LICENSE
-
-Copyright (C) 2004 by Michael Chapman
-
-This library is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself.
-
-=cut
+sub _parse_args($@) {
+	croak 'Invalid arguments' if @{$_[0]} % 2;
+	my %args = @{+shift};
+	my %check = map { $_ => 1 } keys %args;
+	foreach (@_) {
+		delete $check{$_} if exists $check{$_};
+	}
+	croak "Unknown argument '$_'" foreach keys %check;
+	%args;
+}
 
 sub _v4_pack {
 	my $ip = shift;
@@ -317,3 +188,250 @@ sub _v6_unpack {
 	$result =~ s/^0:/:/;
 	$result;
 }
+
+=head1 NAME
+
+Net::CDP - Cisco Discovery Protocol (CDP) advertiser/listener
+
+=head1 SYNOPSIS
+
+  use Net::CDP;
+
+  # Available network ports
+  @ports = Net::CDP::ports;  
+
+  # Creating a CDP advertiser/listener
+  $cdp = new Net::CDP;
+
+  # Receiving a CDP packet
+  $packet = $cdp->recv;
+  
+  # Sending a CDP packet
+  $cdp->send($packet);
+  
+  # Other Net::CDP methods
+  $port = $cdp->port;
+  @addresses = $cdp->addresses;
+
+=head1 DESCRIPTION
+
+The Net::CDP module implements an advertiser/listener for the Cisco
+Discovery Protocol.
+
+CDP is a proprietary Cisco protocol for discovering devices on a network. A
+typical CDP implementation sends periodic CDP packets on every network
+port. It might also listen for packets for advertisements sent by neighboring
+devices.
+
+A Net::CDP object represents an advertiser/listener for a single network
+port. It can send and receive individual CDP packets, each represented by a
+L<Net::CDP::Packet> object.
+
+To manage multiple ports simultaneously, you might like to take a look at
+L<Net::CDP::Manager>.
+
+If you are upgrading code from an older version of Net::CDP, please read the
+L</"UPGRADING FROM PREVIOUS VERSIONS"> section below.
+
+=head1 CONSTRUCTORS
+
+=over
+
+=item B<new>
+
+    $cdp = new Net::CDP($port)
+    $cdp = new Net::CDP(
+             [ port        => $port,        ]
+             [ promiscuous => $promiscuous, ] # default = 0
+             [ enable_recv => $enable_recv, ] # default = 1
+             [ enable_send => $enable_send, ] # default = 1
+           );
+
+Returns a new Net::CDP object.
+
+If specified, C<$port> must be the name of the network port that should be used
+to send and receive packets. If no port is specified, the first port on your
+system is used (typically, this is the first Ethernet device -- "eth0", for
+instance).
+
+You can use the L</"ports"> class method to retrieve a list of valid port names.
+
+If C<$promiscuous> is non-zero, then promiscuous mode is enabled on the
+specified port. Otherwise, Net::CDP attempts to use a multicast ethernet
+address instead. Multicast addresses may not work with all network drivers.
+
+By default, C<$enable_recv> and C<$enable_send> are both 1. If either of these
+are set to 0 the corresponding function is disabled. This saves a small amount
+of memory and a file descriptor, and might be useful when you do not intend to
+both send and receive packets. You probably won't want to set I<both> to 0.
+
+This constructor used to take a single argument, C<$flags>. This is now
+deprecated. See L</"UPGRADING FROM PREVIOUS VERSIONS"> below.
+
+=back
+
+=cut
+
+sub new($;@) {
+	my $class = shift;
+	my $port;
+	my $flags = 0;
+	
+	if (@_ == 2 && $_[1] =~ /^\d+$/) {
+		_deprecated;
+		$flags = pop;
+	}
+	
+	$port = shift if @_ == 1;
+	my %args = _parse_args \@_, qw(port promiscuous enable_recv enable_send);
+	
+	$port = $args{port} if exists $args{port};
+	$flags |= CDP_PROMISCUOUS() if $args{promiscuous};
+	$flags |= CDP_DISABLE_RECV()
+		if exists $args{enable_recv} && !$args{enable_recv};
+	$flags |= CDP_DISABLE_SEND()
+		if exists $args{enable_send} && !$args{enable_send};
+	carp "enable_recv => 0 and enable_send => 0 both specified"
+		if $flags & CDP_DISABLE_RECV() and $flags & CDP_DISABLE_SEND();
+	
+	$class->_new($port, $flags);
+}
+
+=head1 CLASS METHODS
+
+=over 
+
+=item B<ports>
+
+    @ports = Net::CDP::ports()
+
+Returns a list of network ports that can be used by this module.
+
+=back
+
+=head1 OBJECT METHODS
+
+=over
+
+=item B<port>
+
+    $port = $cdp->port()
+
+Returns the network port associated with this Net::CDP object.
+
+=item B<addresses>
+
+    @addresses = $cdp->addresses()
+
+Returns the addresses of the network port associated with this
+Net::CDP object. In scalar context the number of addresses is returned.
+
+I<NOTE:> Currently only a single IPv4 address is returned, even if the port
+has more than one bound address.
+
+=item B<recv>
+
+    $packet = $cdp->recv(
+                 [ nonblock      => $nonblock,      ] # default = 0
+                 [ decode_errors => $decode_errors, ] # default = 0
+              )
+
+Returns the next available CDP packet as a L<Net::CDP::Packet> object. If the
+C<$nonblock> flag is set, an undefined value returned if no packets are
+immediately available. Otherwise, this method blocks until a packet is received
+or an error occurs. If an error occurs, this method croaks.
+
+By default, decoding errors will be silently ignored. If C<$decode_errors> is
+set, this method will croak on a decoding error.
+
+This method used to take a single argument, C<$flags>. This is now
+deprecated. See L</"UPGRADING FROM PREVIOUS VERSIONS"> below.
+
+=cut
+
+sub recv($;@) {
+	my $self = shift;
+	my $flags = 0;
+	
+	if (@_ == 1 && $_[0] =~ /^\d+$/) {
+		_deprecated;
+		$flags = pop;
+	}
+	
+	my %args = _parse_args \@_, qw(nonblock decode_errors);
+	
+	$flags |= CDP_RECV_NONBLOCK() if $args{nonblock};
+	$flags |= CDP_RECV_DECODE_ERRORS() if  $args{decode_errors};
+	
+	$self->_recv($flags);
+}
+
+=item B<send>
+
+    $bytes = $cdp->send($packet)
+
+Transmits the specified packet, which must be a L<Net::CDP::Packet> object,
+and returns the number of bytes sent. If an error occurs, this method croaks.
+
+=back
+
+=cut
+
+sub send($;@) {
+	my $self = shift;
+	my $packet;
+	
+	$packet = shift if @_ == 1;
+	my %args = _parse_args \@_, qw(packet);
+	
+	$packet = $args{packet} if exists $args{packet};
+	
+	croak 'No packet supplied' unless defined $packet;
+	
+	$self->_send($packet);
+}
+
+=head1 UPGRADING FROM PREVIOUS VERSIONS
+
+Net::CDP version 0.07 introduces the use of named arguments instead of flag
+bitmaps for the L</"new"> constructor and L</"recv"> method. Furthermore, the
+C<:caps> and C<:protos> import tags now live in L<Net::CDP::Packet> and
+L<Net::CDP::Address> respectively.
+
+A warning is generated the first time you attempt to use a deprecated feature.
+Actual support for the old-style flag bitmaps will be removed soon. To upgrade
+your code you will need to:
+
+=over
+
+=item *
+
+Do not import the C<:general> or C<:recv> tags; use named arguments
+in calls to L</"new"> and L</"recv"> instead.
+
+=item *
+
+Replace C<use Net::CDP qw(:caps)> with C<use Net::CDP::Packet qw(:caps)>, and
+C<use Net::CDP qw(:protos)> with C<use Net::CDP::Address qw(:protos)>.
+
+=back
+
+=head1 SEE ALSO
+
+L<Net::CDP::Packet>
+
+=head1 AUTHOR
+
+Michael Chapman, E<lt>cpan@very.puzzling.orgE<gt>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) 2004 by Michael Chapman
+
+libcdp is released under the terms and conditions of the GNU Library General
+Public License version 2. Net::CDP may be redistributed and/or modified under
+the same terms as Perl itself.
+
+=cut
+
+1;

@@ -1,10 +1,14 @@
 /*
- * $Id: cdp_address.c,v 1.1.1.1 2004/06/04 06:01:29 mchapman Exp $
+ * $Id: cdp_address.c,v 1.1 2004/09/02 04:25:06 mchapman Exp $
  */
+
+#include <config.h>
 
 #include "cdp.h"
 
-#include <stdlib.h>
+#ifdef HAVE_STDLIB_H
+# include <stdlib.h>
+#endif /* HAVE_STDLIB_H */
 
 /*
  * These tables were derived from the Cisco documentation at

@@ -1,15 +1,15 @@
 package Net::CDP::IPPrefix;
 
 #
-# $Id: IPPrefix.pm,v 1.2 2004/06/07 00:16:21 mchapman Exp $
+# $Id: IPPrefix.pm,v 1.4 2004/09/02 04:25:04 mchapman Exp $
 #
 
 use strict;
-use Carp;
+use Carp::Clan qw(^Net::CDP);
 
 use vars qw($VERSION);
 
-$VERSION = (qw$Revision: 1.2 $)[1];
+$VERSION = (qw$Revision: 1.4 $)[1];
 
 use Net::CDP;
 
@@ -153,8 +153,9 @@ Michael Chapman, E<lt>cpan@very.puzzling.orgE<gt>
 
 Copyright (C) 2004 by Michael Chapman
 
-This library is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself.
+libcdp is released under the terms and conditions of the GNU Library General
+Public License version 2. Net::CDP may be redistributed and/or modified under
+the same terms as Perl itself.
 
 =cut
 

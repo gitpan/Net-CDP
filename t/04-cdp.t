@@ -1,32 +1,34 @@
-use Test::More tests => 19;
+use Test::More tests => 22;
 
-BEGIN { use_ok('Net::CDP', ':recv', ':general'); }
+BEGIN { use_ok('Net::CDP'); }
 
 my @available = Net::CDP::ports();
 ok(1, 'Net::CDP::ports');
 
 SKIP: {
-	skip 'Not running as root', 17
+	skip 'Not running as root', 20
 		if $> != 0;
-	skip 'No network devices available', 17
+	skip 'No network ports available', 20
 		unless @available;
 
 	my $valid = 1;
 	foreach (@available) {
-		$valid &&= eval { new Net::CDP($_); 1 }
+		$valid &&=
+			eval { new Net::CDP($_); 1 } ||
+			eval { new Net::CDP($_, promiscuous => 1); 1 };
 	}
-	ok($valid, 'All available devices could actually be opened');
+	ok($valid, 'All available ports could actually be opened');
 
-	skip 'No loopback device available', 16
+	skip 'No loopback port available', 19
 		unless grep /^lo/, @available;
-	my $device = (grep /^lo/, @available)[0];
+	my $port = (grep /^lo/, @available)[0];
 	
-	my $cdp = new Net::CDP($device);
+	my $cdp = new Net::CDP($port);
 	isa_ok($cdp, 'Net::CDP');
 	
 	my $out = new Net::CDP::Packet($cdp);
 	# Net::CDP::Packet is checked out in 03-packet.t
-	is($out->port, $device, 'CDP port ID matches selected device');
+	is($out->port, $port, 'CDP port ID matches selected port');
 	
 	ok($cdp->send($out), 'Sending a CDP packet') or
 		diag('The next test will probably freeze');
@@ -86,6 +88,19 @@ SKIP: {
 	is($in->native_vlan, $out->native_vlan, 'CDP native VLANs match');
 	is($in->duplex, $out->duplex, 'CDP native VLANs match');
 
-	$in = $cdp->recv(CDP_RECV_NONBLOCK);
+	$in = $cdp->recv(nonblock => 1);
 	ok(!$in, 'Net::CDP::recv does not duplicate packets');
+
+	$cdp = new Net::CDP(port => $port, enable_recv => 0);
+	eval { $cdp->recv(nonblock => 1)	};
+	isnt($@, '', 'Can not receive with enable_recv set to 0');
+
+	$cdp = new Net::CDP(port => $port, enable_send => 0);
+	eval { $cdp->send($out) };
+	isnt($@, '', 'Can not send with enable_send set to 0');
+
+	my $warned = '';
+	$SIG{__WARN__} = sub { $warned = $_[0] };
+	$cdp = new Net::CDP(port => $port, enable_recv => 0, enable_send => 0);
+	isnt($warned, '', 'Setting enable_recv and enable_send both set to 0 produces warning');
 }

@@ -21,6 +21,50 @@ typedef double NV; /* 5.6 and later define NVTYPE, and typedef NV to it.  */
 #endif
 
 static int
+constant_16 (pTHX_ const char *name, IV *iv_return) {
+  /* When generated this function returned values for the list of names given
+     here.  However, subsequent manual editing may have added or removed some.
+     CDP_CAP_REPEATER CDP_DISABLE_RECV CDP_DISABLE_SEND */
+  /* Offset 14 gives the best switch position.  */
+  switch (name[14]) {
+  case 'C':
+    if (memEQ(name, "CDP_DISABLE_RECV", 16)) {
+    /*                             ^        */
+#ifdef CDP_DISABLE_RECV
+      *iv_return = (IV) CDP_DISABLE_RECV;
+      return PERL_constant_ISUV;
+#else
+      return PERL_constant_NOTDEF;
+#endif
+    }
+    break;
+  case 'E':
+    if (memEQ(name, "CDP_CAP_REPEATER", 16)) {
+    /*                             ^        */
+#ifdef CDP_CAP_REPEATER
+      *iv_return = (IV) CDP_CAP_REPEATER;
+      return PERL_constant_ISUV;
+#else
+      return PERL_constant_NOTDEF;
+#endif
+    }
+    break;
+  case 'N':
+    if (memEQ(name, "CDP_DISABLE_SEND", 16)) {
+    /*                             ^        */
+#ifdef CDP_DISABLE_SEND
+      *iv_return = (IV) CDP_DISABLE_SEND;
+      return PERL_constant_ISUV;
+#else
+      return PERL_constant_NOTDEF;
+#endif
+    }
+    break;
+  }
+  return PERL_constant_NOTFOUND;
+}
+
+static int
 constant_19 (pTHX_ const char *name, IV *iv_return) {
   /* When generated this function returned values for the list of names given
      here.  However, subsequent manual editing may have added or removed some.
@@ -130,8 +174,8 @@ my @names = (qw(CDP_ADDR_PROTO_APOLLO CDP_ADDR_PROTO_APPLETALK
 	       CDP_ADDR_PROTO_IPV6 CDP_ADDR_PROTO_IPX CDP_ADDR_PROTO_VINES
 	       CDP_ADDR_PROTO_XNS CDP_CAP_HOST CDP_CAP_IGMP CDP_CAP_REPEATER
 	       CDP_CAP_ROUTER CDP_CAP_SOURCE_BRIDGE CDP_CAP_SWITCH
-	       CDP_CAP_TRANSPARENT_BRIDGE CDP_RECV_DECODE_ERRORS
-	       CDP_RECV_NONBLOCK));
+	       CDP_CAP_TRANSPARENT_BRIDGE CDP_DISABLE_RECV CDP_DISABLE_SEND
+	       CDP_PROMISCUOUS CDP_RECV_DECODE_ERRORS CDP_RECV_NONBLOCK));
 
 print constant_types(); # macro defs
 foreach (C_constant ("Net::CDP", 'constant', 'UV', $types, undef, 3, @names) ) {
@@ -201,15 +245,18 @@ __END__
       break;
     }
     break;
-  case 16:
-    if (memEQ(name, "CDP_CAP_REPEATER", 16)) {
-#ifdef CDP_CAP_REPEATER
-      *iv_return = (IV) CDP_CAP_REPEATER;
+  case 15:
+    if (memEQ(name, "CDP_PROMISCUOUS", 15)) {
+#ifdef CDP_PROMISCUOUS
+      *iv_return = (IV) CDP_PROMISCUOUS;
       return PERL_constant_ISUV;
 #else
       return PERL_constant_NOTDEF;
 #endif
     }
+    break;
+  case 16:
+    return constant_16 (aTHX_ name, iv_return);
     break;
   case 17:
     if (memEQ(name, "CDP_RECV_NONBLOCK", 17)) {

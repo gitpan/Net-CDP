@@ -1,6 +1,8 @@
 /*
- * $Id: cdp_checksum.c,v 1.4 2004/06/09 00:27:04 mchapman Exp $
+ * $Id: cdp_checksum.c,v 1.1 2004/09/02 04:25:06 mchapman Exp $
  */
+
+#include <config.h>
 
 #include "cdp.h"
 

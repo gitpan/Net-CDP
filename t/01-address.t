@@ -1,6 +1,6 @@
-use Test::More tests => 18;
+use Test::More tests => 17;
 
-BEGIN { use_ok('Net::CDP', ':protos'); use_ok('Net::CDP::Address'); }
+BEGIN { use_ok('Net::CDP::Address', ':protos'); }
 
 my $address = new Net::CDP::Address('127.0.0.1');
 isa_ok($address, 'Net::CDP::Address', 'IPv4 address');

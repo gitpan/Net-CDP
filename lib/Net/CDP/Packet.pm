@@ -1,6 +1,42 @@
+package Net::CDP::Packet;
+
 #
-# $Id: Packet.pod,v 1.2 2004/06/07 00:16:21 mchapman Exp $
+# $Id: Packet.pm,v 1.3 2004/09/02 04:25:04 mchapman Exp $
 #
+
+use 5.00503;
+use strict;
+use Carp::Clan qw(^Net::CDP);
+
+use vars qw($VERSION @ISA $AUTOLOAD @EXPORT @EXPORT_OK %EXPORT_TAGS);
+
+$VERSION = (qw$Revision: 1.3 $)[1];;
+
+require Exporter;
+@ISA = qw(Exporter);
+
+my @EXPORT_CAPS = qw(
+	CDP_CAP_ROUTER CDP_CAP_TRANSPARENT_BRIDGE CDP_CAP_SOURCE_BRIDGE
+	CDP_CAP_SWITCH CDP_CAP_HOST CDP_CAP_IGMP CDP_CAP_REPEATER
+);
+
+@EXPORT = qw();
+@EXPORT_OK = (@EXPORT_CAPS, );
+%EXPORT_TAGS = (
+	caps => [ @EXPORT_CAPS, ],
+);
+
+sub AUTOLOAD {
+	my $constname;
+	($constname = $AUTOLOAD) =~ s/.*:://;
+	croak '&Net::CDP::constant not defined' if $constname eq 'constant';
+	my ($error, $val) = Net::CDP::Constants::constant($constname);
+	croak $error if $error;
+
+	no strict 'refs';
+	*$AUTOLOAD = sub { $val };
+	goto &$AUTOLOAD;
+}
 
 =head1 NAME
 
@@ -8,8 +44,7 @@ Net::CDP::Packet - Cisco Discovery Protocol (CDP) packet
 
 =head1 SYNOPSIS
 
-  use Net::CDP qw(:caps);
-  use Net::CDP::Packet;
+  use Net::CDP::Packet qw(:caps);
   
   # Constructors
   $packet = new Net::CDP::Packet;
@@ -17,19 +52,23 @@ Net::CDP::Packet - Cisco Discovery Protocol (CDP) packet
   $cloned = clone $packet;
   
   # Object methods
-  $version               = $packet->version;
-  $ttl                   = $packet->ttl;
-  $checksum              = $packet->checksum;
-  $device                = $packet->device;
-  @addresses             = $packet->addresses;
-  $port                  = $packet->port;
-  $capabilities          = $packet->capabilities;
-  $ios_version           = $packet->ios_version;
-  $platform              = $packet->platform;
-  @ip_prefixes           = $packet->ip_prefixes;
-  $vtp_management_domain = $packet->vtp_management_domain;
-  $native_vlan           = $packet->native_vlan;
-  $duplex                = $packet->duplex;
+  $version                     = $packet->version;
+  $ttl                         = $packet->ttl;
+  $checksum                    = $packet->checksum;
+  $device                      = $packet->device;
+  @addresses                   = $packet->addresses;
+  $port                        = $packet->port;
+  $capabilities                = $packet->capabilities;
+  $ios_version                 = $packet->ios_version;
+  $platform                    = $packet->platform;
+  @ip_prefixes                 = $packet->ip_prefixes;
+  $vtp_management_domain       = $packet->vtp_management_domain;
+  $native_vlan                 = $packet->native_vlan;
+  $duplex                      = $packet->duplex;
+  ($voice_vlan, $appliance_id) = $packet->voice_vlan;
+  $mtu                         = $packet->mtu;
+  $trusted                     = $packet->trusted;
+  $untrusted_cos               = $packet->untrusted_cos
 
 =head1 DESCRIPTION
 
@@ -60,6 +99,7 @@ generate the following fields:
 
     Port ID: $cdp->port()
     Addresses: $cdp->addresses()
+    Duplex
 
 =item B<clone>
 
@@ -125,7 +165,7 @@ Otherwise C<$new_addresses> must be a reference to an array of
 L<Net::CDP::Address> objects. The array may be empty.
 
 For packets received from other devices, the Addresses field specifies the
-addresses of the network port (interface) upon which the packet was sent.
+addresses of the network port upon which the packet was sent.
 
 =item B<port>
 
@@ -137,7 +177,7 @@ C<$new_port> is supplied, the field will be updated first. If C<$new_device> is
 undefined, the Port ID field is removed from the packet.
 
 For packets received from other devices, the Port ID field specifies the network
-port (interface) upon which the packet was sent.
+port upon which the packet was sent.
 
 =item B<capabilities>
 
@@ -160,8 +200,7 @@ constants:
     CDP_CAP_IGMP
     CDP_CAP_REPEATER
 
-These constants can be exported from Net::CDP using the tag C<:caps>. See
-L<Exporter>.
+These constants can be exported using the tag C<:caps>. See L<Exporter>.
 
 =item B<ios_version>
 
@@ -224,9 +263,84 @@ Returns this packet's Duplex field if present, C<undef> otherwise. If
 C<$new_duplex> is supplied, the field will be updated first. If C<$new_duplex>
 is undefined, the Duplex field is removed from the packet.
 
-The Duplex field contains a boolean value. If it is true, the interface
-supplied in the Port ID field supports full-duplex communication. Otherwise,
-only half-duplex communication is supported.
+The Duplex field contains a boolean value. If it is true, the port supplied in
+the Port ID field supports full-duplex communication. Otherwise, only
+half-duplex communication is supported.
+
+=item B<voice_vlan>
+
+    $voice_vlan                  = $packet->voice_vlan()
+    ($voice_vlan, $appliance_id) = $packet->voice_vlan()
+    ($voice_vlan, $appliance_id)
+        = $packet->voice_vlan($new_voice_vlan)
+    ($voice_vlan, $appliance_id)
+        = $packet->voice_vlan($new_voice_vlan, $new_appliance_id)
+
+Returns the Voice VLAN from this packet's Appliance VLAN-ID field if present,
+C<undef> otherwise. In list context, the Appliance ID is also returned.
+
+If C<$new_voice_vlan> or C<$new_appliance_id> is supplied, the field will be
+updated first:
+
+=over
+
+=item $packet->voice_vlan($new_voice_vlan)
+
+Updates the Voice VLAN only. If no Appliance VLAN-ID field currently exists in
+the packet, the Appliance ID is set to 1.
+
+=item $packet->voice_vlan(undef, $new_appliance_id)
+
+Updates the Appliance ID only. If no Appliance VLAN-ID field currently exists
+in the packet, the method croaks.
+
+=item $packet->voice_vlan($new_voice_vlan, $new_appliance_id)
+
+Updates both the Voice VLAN and the Appliance ID.
+
+=item $packet->voice_vlan(undef) or $packet->voice_vlan(undef, undef)
+
+Removes the Appliance VLAN-ID field completely.
+
+=back
+
+=item B<mtu>
+
+    $mtu = $packet->mtu()
+    $mtu = $packet->mtu($new_mtu)
+
+Returns this packet's MTU field if present, C<undef> otherwise. If C<$new_mtu>
+is supplied, the field will be updated first. If C<$new_mtu> is undefined, the
+MTU field is removed from the packet.
+
+=item B<trusted>
+
+    $trusted = $packet->trusted()
+    $trusted = $packet->trusted($new_trusted)
+
+Returns this packet's Extended Trust field if present, C<undef> otherwise.
+If C<$new_trusted> is supplied, the field will be updated first. If
+C<$new_trusted> is undefined, the Extended Trust field is removed from the
+packet.
+
+The Extended Trust field contains a boolean value. If it is true, the port
+trusts the CoS (Class of Service) values in incoming packets. Otherwise, the
+port will assign its own CoS value to the traffic. See also the
+L</untrusted_cos> method.
+
+=item B<untrusted_cos>
+
+    $untrusted_cos = $packet->untrusted_cos()
+    $untrusted_cos = $packet->untrusted_cos($new_untrusted_cos)
+
+Returns this packet's CoS for Untrusted Ports field if present, C<undef>
+otherwise. If C<$new_untrusted_cos> is supplied, the field will be updated
+first. If C<$new_untrusted_cos> is undefined, the field is removed from the
+packet.
+
+The CoS for Untrusted Ports field contains the CoS (Class of Service) that will
+be applied when the port does not trust the CoS of incoming packets. See also
+the L</trusted> method.
 
 =back
 
@@ -242,5 +356,10 @@ Michael Chapman, E<lt>cpan@very.puzzling.orgE<gt>
 
 Copyright (C) 2004 by Michael Chapman
 
-This library is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself.
+libcdp is released under the terms and conditions of the GNU Library General
+Public License version 2. Net::CDP may be redistributed and/or modified under
+the same terms as Perl itself.
+
+=cut
+
+1;

@@ -1,8 +1,7 @@
-use Test::More tests => 52;
+use Test::More tests => 51;
 
 BEGIN {
-	use_ok('Net::CDP', ':caps');
-	use_ok('Net::CDP::Address');
+	use_ok('Net::CDP::Packet', ':caps');
 	use_ok('Net::CDP::IPPrefix');
 }
 
@@ -135,7 +134,7 @@ while ($valid && @cloned_ip_prefixes && @saved_ip_prefixes) {
 	bless $saved_ip_prefix, 'Net::CDP::IPPrefix';
 	bless $cloned_ip_prefix, 'Net::CDP::IPPrefix';
 }
-ok($valid && !@cloned_ip_prefixes && !@saved_ip_prefixes, 'CDP IP prefix lists match');
+ok($valid && !@cloned_ip_prefixes && !@saved_ip_prefixes, 'Cloned packet: CDP IP prefix lists match');
 
 is($cloned->vtp_management_domain, $saved->vtp_management_domain, 'Cloned packet: VTP management domain field is identical to original');
 is($cloned->native_vlan, $saved->native_vlan, 'Cloned packet: native VLAN field is identical to original');

@@ -1,10 +1,14 @@
 /*
- * $Id: cdp_llist.c,v 1.1.1.1 2004/06/04 06:01:29 mchapman Exp $
+ * $Id: cdp_llist.c,v 1.1 2004/09/02 04:25:06 mchapman Exp $
  */
+
+#include <config.h>
 
 #include "cdp.h"
 
-#include <stdlib.h>
+#ifdef HAVE_STDLIB_H
+# include <stdlib.h>
+#endif /* HAVE_STDLIB_H */
 
 cdp_llist_t *
 cdp_llist_new(cdp_dup_fn_t dup_fn, cdp_free_fn_t free_fn) {

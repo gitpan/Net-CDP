@@ -1,15 +1,15 @@
 package Net::CDP::Manager;
 
 #
-# $Id: Manager.pm,v 1.4 2004/06/10 11:41:00 mchapman Exp $
+# $Id: Manager.pm,v 1.11 2004/09/02 05:42:59 mchapman Exp $
 #
 
 use strict;
-use Carp;
+use Carp::Clan qw(^Net::CDP);
 
 use vars qw($VERSION @ISA $AUTOLOAD @EXPORT @EXPORT_OK %EXPORT_TAGS);
 
-$VERSION = (qw$Revision: 1.4 $)[1];
+$VERSION = (qw$Revision: 1.11 $)[1];
 
 require Exporter;
 @ISA = qw(Exporter);
@@ -21,20 +21,24 @@ require Exporter;
 	cdp_managed cdp_hard cdp_soft cdp_active cdp_inactive
 	cdp_recv cdp_send
 	cdp_loop
-	cdp_template cdp_flags
+	cdp_template cdp_args
 );
 
-use Net::CDP qw(:recv);
+use Net::CDP;
 use Time::HiRes qw(gettimeofday);
 
 my %managed;
 my %hard;
 my $template = new Net::CDP::Packet();
-my $flags = 0;
+my %args = (promiscuous => 0);
 
 {
 	my $ref; $ref = \$ref;
 	use constant CDP_LOOP_ABORT => \$ref;
+}
+
+sub _clear_error() {
+	$@ = '';
 }
 
 sub _try_new_cdp(@) {
@@ -42,22 +46,8 @@ sub _try_new_cdp(@) {
 		local $SIG{__DIE__};
 		new Net::CDP(@_);
 	};
-	$@ = '';
+	_clear_error();
 	$result;
-}
-
-sub _carp(&;@) {
-	my ($result, @result);
-	if (wantarray) {
-		@result = eval { shift->(@_) };
-	} else {
-		$result = eval { shift->(@_) };
-	}
-	if ($@) {
-		$@ =~ s/ at \S+ line \d+\.?\n*//;
-		croak $@;
-	}
-	wantarray ? @result : $result;
 }
 
 =head1 NAME
@@ -68,27 +58,27 @@ Net::CDP::Manager - Cisco Discover Protocol (CDP) manager
 
   use Net::CDP::Manager;
   
-  # Available ports (interfaces)
+  # Available network ports
   @ports = cdp_ports;
   
-  # Adding ports (interfaces) to manage
+  # Adding ports to manage
   cdp_manage(@ports);      # default is hard ports only
   cdp_manage_soft(@ports);
   
-  # Removing ports (interfaces) to manage
+  # Removing ports to manage
   cdp_unmanage(@ports);
   
-  # Returning managed ports (interfaces)
+  # Returning managed ports
   @managed  = cdp_managed;
   @soft     = cdp_soft;
   @hard     = cdp_hard;
   @active   = cdp_active;
   @inactive = cdp_inactive;
   
-  # Receiving a CDP packet by any managed port (interface)
+  # Receiving a CDP packet by any managed port
   cdp_recv;
   
-  # Send a CDP packet on all managed ports (interfaces)
+  # Send a CDP packet on all managed ports
   cdp_send;
   
   # Loop and dispatch CDP packets to callback
@@ -98,14 +88,14 @@ Net::CDP::Manager - Cisco Discover Protocol (CDP) manager
   # The template Net::CDP::Packet object
   $template     = cdp_template;
 	
-	# Flags used when creating Net::CDP objects
-	$flags        = cdp_flags;
+	# Arguments used when creating Net::CDP objects
+	%args        = cdp_args;
 
 =head1 DESCRIPTION
 
-The Net::CDP::Manager module provides a simple interface to multiple CDP
+The Net::CDP::Manager module provides a simple interface to manage multiple CDP
 advertiser/listeners (Net::CDP objects). With this module, CDP packets can
-be received and sent over multiple network ports (interfaces).
+be received and sent over multiple network ports.
 
 Ports managed by this module are treated in one of two different ways. "Hard"
 ports must always exist -- if any errors occur while initializing the port,
@@ -117,6 +107,9 @@ Each soft port is in one of two states. Ports on which the last receive or send
 was successful are deemed to be "active". Newly managed ports, or ports on
 which the last receive or send was unsuccessful are deemed to be "inactive".
 
+If you are upgrading code from an older version of Net::CDP, please read the
+L</"UPGRADING FROM PREVIOUS VERSIONS"> section below.
+
 =head1 FUNCTIONS
 
 =over
@@ -125,9 +118,9 @@ which the last receive or send was unsuccessful are deemed to be "inactive".
 
     @ports = cdp_ports;
 
-Returns a list of network ports (interfaces) that can be used by this module.
-This method returns exactly that returned by the
-L<Net::CDP::ports|Net::CDP/"ports"> class method.
+Returns a list of network ports that can be used by this module. This method
+returns exactly that returned by the L<Net::CDP::ports|Net::CDP/"ports"> class
+method.
 
 =cut
 
@@ -137,16 +130,21 @@ sub _cdp_manage($@) {
 	my ($hard, @ports) = @_;
 	my @added;
 	my %add;
+	
+	_clear_error();
+	
 	foreach (@ports) {
 		next if exists $add{$_};
 		next if $hard && exists $managed{$_} && defined $managed{$_};
 		push @added, $_ unless exists $managed{$_};
-		$add{$_} = $hard ? _carp { new Net::CDP($_, $flags) } : undef;
+		$add{$_} = $hard ? new Net::CDP(port => $_, %args) : undef;
 	}
+	
 	foreach (keys %add) {
 		$managed{$_} = $add{$_} unless $managed{$_};
 		$hard{$_} = $hard;
 	}
+	
 	@added;
 }
 
@@ -154,10 +152,10 @@ sub _cdp_manage($@) {
 
     @added = cdp_manage(@ports)
 
-Adds the supplied network ports (interfaces) to the manager's list of managed
-ports. Returns the actual ports added, which may be fewer than provided if some
-ports are already managed. In scalar context the number of ports added is
-returned. If any ports could not be initialized, this method croaks.
+Adds the supplied network ports to the manager's list of managed ports. Returns
+the actual ports added, which may be fewer than provided if some ports are
+already managed. In scalar context the number of ports added is returned. If
+any ports could not be initialized, this method croaks.
 
 Ports added by this function are hard -- that is, errors on them will generate
 errors by the functions of this module.
@@ -175,10 +173,9 @@ sub cdp_manage(@) { _cdp_manage(1, @_) }
 
     @added = cdp_manage_soft(@ports)
 
-Adds the supplied network ports (interfaces) to the manager's list of managed
-ports. Returns the actual ports added, which may be fewer than provided if some
-ports are already managed. In scalar context the number of ports added is
-returned.
+Adds the supplied network ports to the manager's list of managed ports. Returns
+the actual ports added, which may be fewer than provided if some ports are
+already managed. In scalar context the number of ports added is returned.
 
 Ports added by this function are soft -- that is, errors on them will be
 silently ignored by the functions of this module.
@@ -195,23 +192,27 @@ sub cdp_manage_soft(@) { _cdp_manage(0, @_) }
 
     @removed = cdp_unmanage(@ports)
 
-Removes the supplied network ports (interfaces) from the manager's list of
-managed ports. Returns the actual ports removed, which may be fewer than
-provided if C<@ports> contains duplicates. In scalar context the number of
-ports removed is returned.
+Removes the supplied network ports from the manager's list of managed ports.
+Returns the actual ports removed, which may be fewer than provided if C<@ports>
+contains duplicates. In scalar context the number of ports removed is returned.
 
 =cut
 
 sub cdp_unmanage(@) {
 	my %removed;
+	
+	_clear_error();
+	
 	foreach (@_) {
 		next unless exists $removed{$_} || exists $managed{$_};
 		$removed{$_} = 1;
 	}
+	
 	foreach (keys %removed) {
 		delete $managed{$_};
 		delete $hard{$_};
 	}
+	
 	keys %removed;
 }
 
@@ -281,7 +282,7 @@ sub cdp_inactive() { grep { ! defined $managed{$_} } keys %managed }
     $packet                   = cdp_recv()
     ($packet, $port, $remain) = cdp_recv($timeout)
 
-Returns the next available CDP packet on any managed port (interface) as a
+Returns the next available CDP packet on any managed port as a
 L<Net::CDP::Packet> object.
 
 If C<$timeout> is ommitted or undefined, this method will block until a
@@ -302,13 +303,15 @@ For non-blocking operation, specify a timeout of 0.
 sub cdp_recv(;$) {
 	my $remain = shift;
 	
+	_clear_error();
+	
 	my $packet;
 	my $port;
 	do {
 		my @ports;
 		my $rin = '';
 		foreach (keys %managed) {
-			my $cdp = ($managed{$_} ||= _try_new_cdp($_, $flags));
+			my $cdp = ($managed{$_} ||= _try_new_cdp(port => $_, %args));
 			next unless $cdp;
 			my $fd = $cdp->_fd;
 			$ports[$fd] = $_;
@@ -336,7 +339,7 @@ sub cdp_recv(;$) {
 					confess "Select returned unexpected file descriptor $_"
 						unless defined $ports[$_];
 					$port = $ports[$_];
-					$packet = eval { _carp { $managed{$port}->recv(CDP_RECV_NONBLOCK); } };
+					$packet = eval { $managed{$port}->recv(nonblock => 1); };
 					if ($@) {
 						croak "Port $port failed: $@"
 							if $hard{$port};
@@ -355,9 +358,9 @@ sub cdp_recv(;$) {
 
     @ports = cdp_send()
 
-Sends a CDP packet over all managed ports (interfaces), and returns the ports
-on which packets were successfully sent. In scalar context the number of such
-ports is returned.
+Sends a CDP packet over all managed ports, and returns the ports on which
+packets were successfully sent. In scalar context the number of such ports is
+returned.
 
 Internally, an appropriate packet is generated and sent for each port in turn.
 If an error occurs while generating or sending a packet for a hard port, this
@@ -373,14 +376,16 @@ error message.
 sub cdp_send() {
 	my @successful;
 	
+	_clear_error();
+	
 	foreach (keys %managed) {
-		my $cdp = ($managed{$_} ||= _try_new_cdp($_, $flags));
+		my $cdp = ($managed{$_} ||= _try_new_cdp(port => $_, %args));
 		next unless $cdp;
 		my $packet = clone $template;
 		$packet->addresses([$cdp->addresses]);
 		$packet->port($cdp->port);
-		my $bytes = eval { _carp { $cdp->send($packet) } };
-		if (defined $bytes) {
+		my $bytes = eval { $cdp->send($packet) };
+		if ($bytes) {
 			push @successful, $_;
 			next;
 		}
@@ -398,9 +403,9 @@ sub cdp_send() {
     $count = cdp_loop(\&callback)
     $count = cdp_loop(\&callback, $timeout)
 
-Enters a loop to continually process received packets from managed ports
-(interfaces) and dispatches them to the specified callback function. Returns
-the number of packets processed.
+Enters a loop to continually process received packets from managed ports and
+dispatches them to the specified callback function. Returns the number of
+packets processed.
 
 Upon receiving each packet C<callback> is called with the following three
 parameters:
@@ -459,6 +464,8 @@ sub cdp_loop(&;$) {
 		unless defined $callback && ref $callback eq 'CODE';
 	my $remain = shift;
 	
+	_clear_error();
+	
 	my $count = 0;
 	{ do {
 		# All of this is so that cdp_recv will never block
@@ -511,27 +518,36 @@ sub cdp_template(;$) {
 	$template;
 }
 
-=item B<cdp_flags>
+=item B<cdp_args>
 
-    $flags = cdp_flags()
-    $flags = cdp_flags($new_flags)
+    %args = cdp_args(
+                [ promiscuous => $promiscuous, ] # default = 0
+            )
 
-Returns the current flags this module will use when creating L<Net::CDP>
-objects. If C<$new_flags> is supplied and defined, the flags will be updated
-first. See L<Net::CDP/"new"> for a list of permitted flags.
+Returns the current settings this module will use when creating L<Net::CDP>
+objects.
 
-By default, no flags will be used (cdp_flags() will return 0). Any set flags
-will be used when creating new L<Net::CDP> objects in subsequent calls to
-L<"cdp_manage"> and L<"cdp_manage_soft">, and when soft ports become active
-in L<"cdp_recv">, L<"cdp_send"> and L<"cdp_loop">.
+This method allows you to change the default values for a subset of the
+arguments allowed in the L<Net::CDP/"new"> method. Currently, the only argument
+permitted is C<promiscuous>.
+
+This function replaces the C<cdp_flags> function from previous versions of
+Net::CDP::Manager. Do not use the C<cdp_flags> function -- replace it with
+calls to C<cdp_args> instead.
 
 =cut
 
-sub cdp_flags(;$) {
-	my $new_flags = shift;
+sub cdp_args(;@) {
+	my @allowed = qw(promiscuous);
+	
+	my %temp = Net::CDP::_parse_args \@_, @allowed;
+	$args{$_} = $temp{$_} foreach keys %temp;
+	%args;
+}
 
-	$flags = 0+$new_flags if defined $new_flags;
-	$flags;
+sub cdp_flags($) {
+	Net::CDP::_deprecated;
+	cdp_args promiscuous => (shift() & Net::CDP::CDP_PROMISCUOUS());
 }
 
 =back
@@ -569,7 +585,8 @@ Michael Chapman, E<lt>cpan@very.puzzling.orgE<gt>
 
 Copyright (C) 2004 by Michael Chapman
 
-This library is free software; you can redistribute it and/or modify it under
+libcdp is released under the terms and conditions of the GNU Library General
+Public License version 2. Net::CDP may be redistributed and/or modified under
 the same terms as Perl itself.
 
 =cut

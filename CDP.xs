@@ -1,5 +1,5 @@
 /*
- * $Id: CDP.xs,v 1.3 2004/06/23 10:03:37 mchapman Exp $
+ * $Id: CDP.xs,v 1.9 2004/09/02 04:25:01 mchapman Exp $
  */
 
 #include "EXTERN.h"
@@ -7,6 +7,9 @@
 #include "XSUB.h"
 
 #include "ppport.h"
+
+#define MAX_VLAN_ID 4095
+#define DEFAULT_APPLIANCE_ID 1
 
 #ifndef newSVuv
 SV * newSVuv(UV data) {
@@ -22,15 +25,31 @@ SV * newSVuv(UV data) {
 #define XSRETURN_UV(v) STMT_START { ST(0) = sv_2mortal(newSVuv(v)); XSRETURN(1); } STMT_END
 #endif /* !XSRETURN_UV */
 
-#include "cdp.h"
+#ifndef SvPV_nomg
+#define SvPV_nomg(sv, lp) SvPV(sv, lp)
+#endif /* !SvPV_nomg */
+
+#include "libcdp/src/cdp.h"
 
 #include "const-c.inc"
 
 #define INSTANCE_METHOD(METHOD) \
-	do { \
+	STMT_START { \
 		if (!self) \
 			croak(METHOD " is an instance method only"); \
-	} while (0)
+	} STMT_END
+
+#define CHECK_VERSION \
+	STMT_START { \
+		if (self) \
+			self->version = ( \
+				self->appliance || \
+				/* self->power_consumption || */ \
+				self->mtu || \
+				self->extended_trust || \
+				self->untrusted_cos \
+			) ? 2 : 1; \
+	} STMT_END
 
 #define MY_CXT_KEY "Net::CDP::_guts" XS_VERSION
 typedef struct {
@@ -45,9 +64,9 @@ typedef struct cdp_ip_prefix * Net_CDP_IPPrefix;
 typedef struct cdp_packet * Net_CDP_Packet;
 typedef int SysRet;
 
-MODULE = Net::CDP		PACKAGE = Net::CDP
+typedef char * string_undef;
 
-INCLUDE: const-xs.inc
+MODULE = Net::CDP		PACKAGE = Net::CDP
 
 BOOT:
 {
@@ -85,15 +104,15 @@ PPCODE:
 	cdp_llist_free(ports);
 
 Net_CDP
-new(CLASS, device=NULL, flags=0)
+_new(CLASS, device, flags)
 	SV *CLASS
-	char *device
+	string_undef device
 	int flags
-PROTOTYPE: $;$
+PROTOTYPE: $$$
 PREINIT:
 	dMY_CXT;
 CODE:
-	MY_CXT.errors[0] = '\0';	
+	MY_CXT.errors[0] = '\0';
 	RETVAL = cdp_new(device, flags, MY_CXT.errors);
 	if (!RETVAL)
 		croak(MY_CXT.errors);
@@ -146,15 +165,15 @@ OUTPUT:
 	RETVAL
 
 Net_CDP_Packet
-recv(self, flags=0)
+_recv(self, flags)
 	Net_CDP self
 	int flags
-PROTOTYPE: $;$$
+PROTOTYPE: $$
 PREINIT:
 	dMY_CXT;
 	int result;
 CODE:
-	INSTANCE_METHOD("recv");
+	INSTANCE_METHOD("_recv");
 	MY_CXT.errors[0] = '\0';	
 	RETVAL = cdp_recv(self, flags, MY_CXT.errors);
 
@@ -167,14 +186,14 @@ OUTPUT:
 	RETVAL
 
 SysRet
-send(self, packet)
+_send(self, packet)
 	Net_CDP self
 	Net_CDP_Packet packet
 PROTOTYPE: $$
 PREINIT:
 	dMY_CXT;
 CODE:
-	INSTANCE_METHOD("send");
+	INSTANCE_METHOD("_send");
 	MY_CXT.errors[0] = '\0';	
 	if (cdp_packet_update(packet, MY_CXT.errors) == -1)
 		croak(MY_CXT.errors);
@@ -202,7 +221,7 @@ PROTOTYPE: $;$
 PREINIT:
 	dMY_CXT;
 CODE:
-	MY_CXT.errors[0] = '\0';	
+	MY_CXT.errors[0] = '\0';
 	RETVAL = cdp_packet_generate(cdp, MY_CXT.errors);
 	if (!RETVAL)
 		croak(MY_CXT.errors);
@@ -267,8 +286,10 @@ PROTOTYPE: $;$
 CODE:
 	INSTANCE_METHOD("device");
 	if (items > 1) {
+		STRLEN n_a;		
 		if (self->device_id) free(self->device_id);
-		self->device_id = (SvOK(new_device) ? strdup(SvPV_nolen(new_device)) : NULL);
+		SvGETMAGIC(new_device);
+		self->device_id = (SvOK(new_device) ? strdup(SvPV_nomg(new_device, n_a)) : NULL);
 	}
 	if (!self->device_id) XSRETURN_UNDEF;
 	RETVAL = self->device_id;
@@ -295,7 +316,7 @@ PPCODE:
 			int i;
 
 			if (!SvROK(new_addresses) || SvTYPE(SvRV(new_addresses)) != SVt_PVAV)
-				croak("new_addresses is not undef or an array reference");
+				croak("Invalid argument (must be undef or an array reference)");
 			a = (AV *)SvRV(new_addresses);
 			addresses = cdp_llist_new((cdp_dup_fn_t)cdp_address_dup, (cdp_free_fn_t)cdp_address_free);
 			for (i = 0; i <= av_len(a); i++) {
@@ -317,10 +338,10 @@ PPCODE:
 		XSRETURN_EMPTY;
 	
 	if (GIMME_V == G_SCALAR) {
-		if (!self->addresses)
-			XSRETURN_UNDEF;
-		else
+		if (self->addresses)
 			XSRETURN_UV(cdp_llist_count(self->addresses));
+		else
+			XSRETURN_UNDEF;
 	}
 	
 	if (!self->addresses)
@@ -337,8 +358,10 @@ PROTOTYPE: $;$
 CODE:
 	INSTANCE_METHOD("port");
 	if (items > 1) {
+		STRLEN n_a;		
 		if (self->port_id) free(self->port_id);
-		self->port_id = (SvOK(new_port) ? strdup(SvPV_nolen(new_port)) : NULL);
+		SvGETMAGIC(new_port);
+		self->port_id = (SvOK(new_port) ? strdup(SvPV_nomg(new_port, n_a)) : NULL);
 	}
 	if (!self->port_id) XSRETURN_UNDEF;
 	RETVAL = self->port_id;
@@ -365,8 +388,10 @@ PROTOTYPE: $;$
 CODE:
 	INSTANCE_METHOD("ios_version");
 	if (items > 1) {
+		STRLEN n_a;
 		if (self->ios_version) free(self->ios_version);
-		self->ios_version = (SvOK(new_ios_version) ? strdup(SvPV_nolen(new_ios_version)) : NULL);
+		SvGETMAGIC(new_ios_version);
+		self->ios_version = (SvOK(new_ios_version) ? strdup(SvPV_nomg(new_ios_version, n_a)) : NULL);
 	}
 	if (!self->ios_version) XSRETURN_UNDEF;
 	RETVAL = self->ios_version;
@@ -381,8 +406,10 @@ PROTOTYPE: $;$
 CODE:
 	INSTANCE_METHOD("platform");
 	if (items > 1) {
+		STRLEN n_a;
 		if (self->platform) free(self->platform);
-		self->platform = (SvOK(new_platform) ? strdup(SvPV_nolen(new_platform)) : NULL);
+		SvGETMAGIC(new_platform);
+		self->platform = (SvOK(new_platform) ? strdup(SvPV_nomg(new_platform, n_a)) : NULL);
 	}
 	if (!self->platform) XSRETURN_UNDEF;
 	RETVAL = self->platform;
@@ -409,7 +436,7 @@ PPCODE:
 			int i;
 
 			if (!SvROK(new_ip_prefixes) || SvTYPE(SvRV(new_ip_prefixes)) != SVt_PVAV)
-				croak("new_ip_prefixes is not undef or an array reference");
+				croak("Invalid argument (must be undef or an array reference)");
 			a = (AV*)SvRV(new_ip_prefixes);
 			ip_prefixes = cdp_llist_new((cdp_dup_fn_t)cdp_ip_prefix_dup, (cdp_free_fn_t)cdp_ip_prefix_free);
 			for (i = 0; i <= av_len(a); i++) {
@@ -431,10 +458,10 @@ PPCODE:
 		XSRETURN_EMPTY;
 	
 	if (GIMME_V == G_SCALAR) {
-		if (!self->ip_prefixes)
-			XSRETURN_UNDEF;
-		else
+		if (self->ip_prefixes)
 			XSRETURN_UV(cdp_llist_count(self->ip_prefixes));
+		else
+			XSRETURN_UNDEF;
 	}
 	
 	if (!self->ip_prefixes)
@@ -451,8 +478,10 @@ PROTOTYPE: $;$
 CODE:
 	INSTANCE_METHOD("vtp_management_domain");
 	if (items > 1) {
+		STRLEN n_a;		
 		if (self->vtp_mgmt_domain) free(self->vtp_mgmt_domain);
-		self->vtp_mgmt_domain = (SvOK(new_vtp_management_domain) ? strdup(SvPV_nolen(new_vtp_management_domain)) : NULL);
+		SvGETMAGIC(new_vtp_management_domain);
+		self->vtp_mgmt_domain = (SvOK(new_vtp_management_domain) ? strdup(SvPV_nomg(new_vtp_management_domain, n_a)) : NULL);
 	}
 	if (!self->vtp_mgmt_domain) XSRETURN_UNDEF;
 	RETVAL = self->vtp_mgmt_domain;
@@ -467,15 +496,22 @@ PROTOTYPE: $;$
 CODE:
 	INSTANCE_METHOD("native_vlan");
 	if (items > 1) {
+		SvGETMAGIC(new_native_vlan);
 		if (SvOK(new_native_vlan)) {
-			if (SvUV(new_native_vlan) == 0)
-				croak("new_native_vlan must be undef or greater than 0");
-			self->native_vlan = SvUV(new_native_vlan);
-		} else
-			self->native_vlan = 0;
+			u_int16_t temp_native_vlan;
+			
+			temp_native_vlan = SvUV(new_native_vlan);
+			if (temp_native_vlan == 0 || temp_native_vlan > MAX_VLAN_ID)
+				croak("Invalid native VLAN (must be between 1 and %u)", MAX_VLAN_ID);
+			if (!self->native_vlan) self->native_vlan = (u_int16_t *)calloc(1, sizeof(u_int16_t));
+			*self->native_vlan = temp_native_vlan;
+		} else {
+			free(self->native_vlan);
+			self->native_vlan = NULL;
+		}
 	}
 	if (!self->native_vlan) XSRETURN_UNDEF;
-	RETVAL = self->native_vlan;
+	RETVAL = *self->native_vlan;
 OUTPUT:
 	RETVAL
 
@@ -487,8 +523,9 @@ PROTOTYPE: $;$
 CODE:
 	INSTANCE_METHOD("duplex");
 	if (items > 1) {
+		SvGETMAGIC(new_duplex);
 		if (SvOK(new_duplex)) {
-			if (!self->duplex) self->duplex = (u_int8_t*)calloc(1, sizeof(u_int8_t));
+			if (!self->duplex) self->duplex = (u_int8_t *)calloc(1, sizeof(u_int8_t));
 			*self->duplex = SvTRUE(new_duplex);
 		} else if (self->duplex) {
 			free(self->duplex);
@@ -497,6 +534,176 @@ CODE:
 	}
 	if (!self->duplex) XSRETURN_UNDEF;
 	RETVAL = *self->duplex;
+OUTPUT:
+	RETVAL
+
+SV *
+voice_vlan(self, new_voice_vlan=NULL, new_appliance_id=NULL)
+	Net_CDP_Packet self
+	SV *new_voice_vlan
+	SV *new_appliance_id
+PROTOTYPE: $;$$
+PREINIT:
+	u_int16_t temp_voice_vlan, temp_appliance_id;
+	int valid_voice_vlan, valid_appliance_id;
+PPCODE:
+	INSTANCE_METHOD("voice_vlan");
+
+	valid_voice_vlan = valid_appliance_id = 0;
+	
+	if (items > 1 && new_voice_vlan) {
+		SvGETMAGIC(new_voice_vlan);
+		if (SvOK(new_voice_vlan)) {
+			temp_voice_vlan = SvUV(new_voice_vlan);
+			if (temp_voice_vlan == 0 || temp_voice_vlan > MAX_VLAN_ID)
+				croak("Invalid voice VLAN (must be between 1 and %u)", MAX_VLAN_ID);
+			valid_voice_vlan = 1;
+		}
+	}
+	
+	if (items > 2 && new_appliance_id) {
+		SvGETMAGIC(new_appliance_id);
+		if (SvOK(new_appliance_id)) {
+			temp_appliance_id = SvUV(new_appliance_id);
+			if (temp_appliance_id == 0 || temp_appliance_id > 255)
+				croak("Invalid appliance ID (must be between 1 and 255)");
+			valid_appliance_id = 1;
+		}
+	}
+	
+	switch (items) {
+	case 3:
+		if (valid_voice_vlan && !valid_appliance_id) {
+			croak("Attempt to undefine appliance ID while setting voice VLAN");
+		} else if (!valid_voice_vlan && valid_appliance_id) {
+			croak("Attempt to undefine voice VLAN while setting appliance ID");
+		}
+		
+		if (valid_voice_vlan) {
+			if (!self->appliance)
+				self->appliance =
+					(struct cdp_appliance *)calloc(1, sizeof(struct cdp_appliance *));
+			self->appliance->vlan = temp_voice_vlan;
+			self->appliance->id = temp_appliance_id;
+		} else if (self->appliance) {
+			free(self->appliance);
+			self->appliance = NULL;
+		}
+		
+		CHECK_VERSION;
+		break;
+	case 2:
+		if (valid_voice_vlan) {
+			if (!self->appliance) {
+				self->appliance =
+					(struct cdp_appliance *)calloc(1, sizeof(struct cdp_appliance *));
+				self->appliance->id = 1;
+			}
+			self->appliance->vlan = temp_voice_vlan;
+		} else if (self->appliance) {
+			free(self->appliance);
+			self->appliance = NULL;
+		}
+		
+		CHECK_VERSION;
+		break;
+	}
+	
+	if (GIMME_V == G_VOID)
+		XSRETURN_EMPTY;
+	
+	if (GIMME_V == G_SCALAR) {
+		if (self->appliance)
+			XSRETURN_UV(self->appliance->vlan);
+		else
+			XSRETURN_UNDEF;
+	}
+	
+	EXTEND(SP, 2);
+	if (self->appliance) {
+		PUSHs(sv_2mortal(newSVuv(self->appliance->vlan)));
+		PUSHs(sv_2mortal(newSVuv(self->appliance->id)));
+	} else {
+		PUSHs(&PL_sv_undef);
+		PUSHs(&PL_sv_undef);
+	}
+
+u_int32_t
+mtu(self, new_mtu=NULL)
+	Net_CDP_Packet self
+	SV *new_mtu
+PROTOTYPE: $;$
+CODE:
+	INSTANCE_METHOD("mtu");
+	if (items > 1) {
+		SvGETMAGIC(new_mtu);
+		if (SvOK(new_mtu)) {
+			u_int32_t temp_mtu;
+			
+			temp_mtu = SvUV(new_mtu);
+			if (temp_mtu == 0)
+				croak("Invalid MTU (must be greater than 0)");
+			if (!self->mtu) self->mtu = (u_int32_t *)calloc(1, sizeof(u_int32_t));
+			*self->mtu = temp_mtu;
+		} else {
+			free(self->mtu);
+			self->mtu = NULL;
+		}
+		CHECK_VERSION;
+	}
+	if (!self->mtu) XSRETURN_UNDEF;
+	RETVAL = *self->mtu;
+OUTPUT:
+	RETVAL
+
+bool
+trusted(self, new_trusted=NULL)
+	Net_CDP_Packet self
+	SV *new_trusted
+PROTOTYPE: $;$
+CODE:
+	INSTANCE_METHOD("trusted");
+	if (items > 1) {
+		SvGETMAGIC(new_trusted);
+		if (SvOK(new_trusted)) {
+			if (!self->extended_trust) self->extended_trust = (u_int8_t *)calloc(1, sizeof(u_int8_t));
+			*self->extended_trust = SvTRUE(new_trusted);
+		} else if (self->extended_trust) {
+			free(self->extended_trust);
+			self->extended_trust = NULL;
+		}
+		CHECK_VERSION;
+	}
+	if (!self->extended_trust) XSRETURN_UNDEF;
+	RETVAL = *self->extended_trust;
+OUTPUT:
+	RETVAL
+
+u_int8_t
+untrusted_cos(self, new_untrusted_cos=NULL)
+	Net_CDP_Packet self
+	SV *new_untrusted_cos
+PROTOTYPE: $;$
+CODE:
+	INSTANCE_METHOD("untrusted_cos");
+	if (items > 1) {
+		SvGETMAGIC(new_untrusted_cos);
+		if (SvOK(new_untrusted_cos)) {
+			u_int8_t temp_untrusted_cos;
+			
+			temp_untrusted_cos = SvUV(new_untrusted_cos);
+			if (temp_untrusted_cos == 0 || temp_untrusted_cos > 7)
+				croak("Invalid COS for Untrusted Ports (must be between 0 and 7)");
+			if (!self->untrusted_cos) self->untrusted_cos = (u_int8_t *)calloc(1, sizeof(u_int8_t));
+			*self->untrusted_cos = temp_untrusted_cos;
+		} else {
+			free(self->untrusted_cos);
+			self->untrusted_cos = NULL;
+		}
+		CHECK_VERSION;
+	}
+	if (!self->untrusted_cos) XSRETURN_UNDEF;
+	RETVAL = *self->untrusted_cos;
 OUTPUT:
 	RETVAL
 
@@ -677,3 +884,6 @@ CODE:
 OUTPUT:
 	RETVAL
 
+MODULE = Net::CDP		PACKAGE = Net::CDP::Constants
+
+INCLUDE: const-xs.inc

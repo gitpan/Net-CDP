@@ -1,5 +1,5 @@
 /*
- * $Id: cdp.h,v 1.3 2004/06/10 11:40:56 mchapman Exp $
+ * $Id: cdp.h,v 1.1 2004/09/02 04:25:06 mchapman Exp $
  */
 
 #ifndef _CDP_H
@@ -9,7 +9,6 @@
 #define _GNU_SOURCE
 #endif /* _GNU_SOURCE */
 
-#include <sys/types.h>
 #include <pcap.h>
 #include <libnet.h>
 
@@ -18,10 +17,6 @@ extern "C" {
 #endif
 
 /******************************************************************************/
-
-#define CDP_VERSION "0.03"
-#define CDP_VERSION_MAJOR 0
-#define CDP_VERSION_MINOR 3
 
 /*
  * The size of the error buffer to be passed to functions that expect one.
@@ -100,7 +95,9 @@ typedef const cdp_llist_item_t *cdp_llist_iter_t;
  * cdp_new flags.
  */
 #define CDP_PROMISCUOUS        0x01
- 
+#define CDP_DISABLE_RECV       0x02
+#define CDP_DISABLE_SEND       0x04
+
 /*
  * cdp_recv flags.
  */
@@ -124,6 +121,7 @@ typedef struct cdp {
 	char *port;
 	u_int8_t mac[6];
 	cdp_llist_t *addresses;
+	u_int8_t *duplex;
 	
 	const struct pcap_pkthdr *header;
 	const u_int8_t *data;
@@ -202,6 +200,11 @@ void cdp_ip_prefix_free(struct cdp_ip_prefix *);
 #define CDP_CAP_IGMP               0x20
 #define CDP_CAP_REPEATER           0x40
 
+struct cdp_appliance {
+	u_int8_t id;
+	u_int16_t vlan;
+};
+
 /*
  * CDP packet.
  *
@@ -222,7 +225,7 @@ void cdp_ip_prefix_free(struct cdp_ip_prefix *);
  */
 struct cdp_packet {
 	u_int8_t *packet;
-	size_t packet_length;
+	u_int16_t packet_length;
 
 	u_int8_t version;
 	u_int8_t ttl;
@@ -235,11 +238,18 @@ struct cdp_packet {
 	char *platform;
 	cdp_llist_t *ip_prefixes;
 	char *vtp_mgmt_domain;
-	u_int16_t native_vlan;
+	u_int16_t *native_vlan;
 	u_int8_t *duplex;
+	struct cdp_appliance *appliance;
+/*
+	FIXME -- see cdp_encoding.c
+	u_int32_t *power_consumption;
+*/
+	u_int32_t *mtu;
+	u_int8_t *extended_trust;
+	u_int8_t *untrusted_cos;
 };
 
-struct cdp_packet * cdp_packet_new(u_int8_t, u_int8_t, const char *, const cdp_llist_t *, const char *, u_int32_t, const char *, const char *, const cdp_llist_t *, const char *, u_int16_t, const u_int8_t *);
 struct cdp_packet * cdp_packet_generate(const cdp_t *, char *);
 struct cdp_packet * cdp_packet_dup(const struct cdp_packet *);
 void cdp_packet_free(struct cdp_packet *);

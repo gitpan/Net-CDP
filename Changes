@@ -1,7 +1,34 @@
 Revision history for Net::CDP
 =============================
 
-*** 0.06 Wed Jun  6 2004
+*** 0.07 Tue Sep 2 2004
+
+Use Carp::Clan to manage error messages.
+
+Minor bugfix in Net::CDP::Manager::cdp_send error handling.
+
+Documentation cleanups.
+
+Turned most flags into named arguments. Warn if a deprecated feature is used
+(but we currently still accept them).
+
+Moved other flags into appropriate modules.
+
+Added ability to selectively disable recv and send methods.
+
+Added most voice VLAN TLVs.
+
+Added detection of port duplex mode.
+
+Removed AutoLoader because it wasn't worth it.
+
+Split the C code into (sort of) a separate library, configured with Autoconf
+rather than MakeMaker.
+
+Make cdp_get_ports manually check each port -- don't rely just on
+pcap_findalldevs.
+
+*** 0.06 Wed Jun 23 2004
 
 Handle 'get' magic properly.
 
@@ -30,4 +57,4 @@ Initial released version.
 
 Original version (unreleased).
 
-$Id: Changes,v 1.10 2004/06/23 10:03:37 mchapman Exp $
+$Id: Changes,v 1.20 2004/09/02 11:51:48 mchapman Exp $

@@ -1,26 +1,53 @@
 package Net::CDP::Address;
 
 #
-# $Id: Address.pm,v 1.2 2004/06/07 00:16:21 mchapman Exp $
+# $Id: Address.pm,v 1.6 2004/09/02 04:25:04 mchapman Exp $
 #
 
+use 5.00503;
 use strict;
-use Carp;
+use Carp::Clan qw(^Net::CDP);
 
-use vars qw($VERSION);
+use vars qw($VERSION @ISA $AUTOLOAD @EXPORT @EXPORT_OK %EXPORT_TAGS);
 
-$VERSION = (qw$Revision: 1.2 $)[1];
+$VERSION = (qw$Revision: 1.6 $)[1];
 
-use Net::CDP qw(:protos);
+require Exporter;
+@ISA = qw(Exporter);
+
+my @EXPORT_PROTOS = qw(
+	CDP_ADDR_PROTO_CLNP CDP_ADDR_PROTO_IPV4 CDP_ADDR_PROTO_IPV6
+	CDP_ADDR_PROTO_DECNET CDP_ADDR_PROTO_APPLETALK CDP_ADDR_PROTO_IPX
+	CDP_ADDR_PROTO_VINES CDP_ADDR_PROTO_XNS CDP_ADDR_PROTO_APOLLO
+);
+
+@EXPORT = qw();
+@EXPORT_OK = (@EXPORT_PROTOS, );
+%EXPORT_TAGS = (
+	protos => [ @EXPORT_PROTOS, ],
+);
+
+sub AUTOLOAD {
+	my $constname;
+	($constname = $AUTOLOAD) =~ s/.*:://;
+	croak '&Net::CDP::constant not defined' if $constname eq 'constant';
+	my ($error, $val) = Net::CDP::Constants::constant($constname);
+	croak $error if $error;
+
+	no strict 'refs';
+	*$AUTOLOAD = sub { $val };
+	goto &$AUTOLOAD;
+}
+
+use Net::CDP;
 
 =head1 NAME
 
-Net::CDP::Address - Cisco Discovery Protocol (CDP) interface address
+Net::CDP::Address - Cisco Discovery Protocol (CDP) port address
 
 =head1 SYNOPSIS
 
-  use Net::CDP qw(:protos);
-  use Net::CDP::Address;
+  use Net::CDP::Address qw(:protos);
   
   # Constructors
   $address = new Net::CDP::Address($ip);
@@ -64,8 +91,7 @@ address. C<$protocol> should be one of the following constants:
     CDP_ADDR_PROTO_XNS
     CDP_ADDR_PROTO_APOLLO
 
-These constants can be exported from Net::CDP::Address using the tag
-C<:protos>. See L<Exporter>.
+These constants can be exported using the tag C<:protos>. See L<Exporter>.
 
 C<$packed> must be a string consisting of the bytes that make up the address in
 network order. You may find the C<pack> function useful in generating this
@@ -84,11 +110,11 @@ sub new($$;$) {
 		$protocol = $ip;
 		$packed = shift;
 	} elsif (defined($packed = Net::CDP::_v6_pack($ip))) {
-		$protocol = CDP_ADDR_PROTO_IPV6;
+		$protocol = CDP_ADDR_PROTO_IPV6();
 	} elsif (defined($packed = Net::CDP::_v4_pack($ip))) {
-		$protocol = CDP_ADDR_PROTO_IPV4;
+		$protocol = CDP_ADDR_PROTO_IPV4();
 	} elsif (defined($packed = gethostbyname($ip))) {
-		$protocol = CDP_ADDR_PROTO_IPV4;
+		$protocol = CDP_ADDR_PROTO_IPV4();
 	}
 	croak "Cannot parse address '$ip'" unless defined $protocol;
 	return $class->_new_by_id($protocol, $packed);
@@ -129,9 +155,9 @@ sub address($) {
 	my $self = shift or croak 'Usage: $self->address';
 	my $protocol = $self->_protocol_id;
 	my $packed = $self->_address;
-	if ($protocol == CDP_ADDR_PROTO_IPV4) {
+	if ($protocol == CDP_ADDR_PROTO_IPV4()) {
 		return Net::CDP::_v4_unpack($packed);
-	} elsif ($protocol == CDP_ADDR_PROTO_IPV6) {
+	} elsif ($protocol == CDP_ADDR_PROTO_IPV6()) {
 		return Net::CDP::_v6_unpack($packed);
 	}
 	return undef;
@@ -162,8 +188,9 @@ Michael Chapman, E<lt>cpan@very.puzzling.orgE<gt>
 
 Copyright (C) 2004 by Michael Chapman
 
-This library is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself.
+libcdp is released under the terms and conditions of the GNU Library General
+Public License version 2. Net::CDP may be redistributed and/or modified under
+the same terms as Perl itself.
 
 =cut
 

@@ -1,57 +1,84 @@
 use 5.00503;
 use ExtUtils::MakeMaker;
 
-# We need to test if this is a recent pcap version.
-# Since there's no version information in pcap.h we can use, we try to
-# get the symbols we're interested in.
-sub recent_pcap {
-	require DynaLoader;
-	my @pcap = DynaLoader::dl_findfile('-lpcap')
-		or return 0; # This'll be catched in WriteMakefile
-	my $pcap = DynaLoader::dl_load_file($pcap[0])
-		or return 0; # Meh, stuff'll break later
-	return
-		defined DynaLoader::dl_find_symbol($pcap, 'pcap_findalldevs') &&
-		defined DynaLoader::dl_find_symbol($pcap, 'pcap_setnonblock');
+package MY;
+
+sub postamble {
+	return <<'EOF';
+$(MYEXTLIB) :: libcdp/Makefile
+$(MYEXTLIB) ::
+	cd libcdp && $(MAKE)
+
+libcdp/Makefile: libcdp/Makefile.in
+	cd libcdp && ./configure
+
+EOF
 }
+
+sub clean_subdirs {
+	return <<'EOF';
+clean_subdirs: 
+	cd libcdp && test -f Makefile && $(MAKE) clean
+
+EOF
+}
+
+sub realclean_subdirs {
+	return <<'EOF';
+realclean_subdirs: 
+	cd libcdp && test -f Makefile && $(MAKE) distclean
+
+EOF
+}
+
+package main;
+
+# Extract the configure arguments before MakeMaker sees it
+my @configure_args;
+my @argv;
+BEGIN {
+	while (my $line = shift @ARGV) {
+		if ($line =~ /^configure_args=(.*)/i) {
+			push @configure_args, $1;
+		} else {
+			push @argv, $line;
+		}
+	}
+	@ARGV = @argv;
+}
+
+chdir 'libcdp' or die "Could not change to libcdp directory\n";
+system("./configure @configure_args") and die "libcdp configure failed\n";
+chdir '..' or die "Could not change back to original directory\n";
+
+use vars qw(%config);
+do 'libcdp/config.pl';
 
 WriteMakefile(
 	NAME         => 'Net::CDP',
-	VERSION_FROM => 'lib/Net/CDP.pm',
-	PREREQ_PM    => { Carp => 0, 'Test::More' => 0, },
+	VERSION_FROM => 'libcdp/config.pl',
+	PREREQ_PM    => { 'Carp::Clan' => 0, 'Test::More' => 0, },
 	($] >= 5.005 ? (
 		ABSTRACT_FROM  => 'lib/Net/CDP.pm',
 		AUTHOR         => 'Michael Chapman <cpan@very.puzzling.org>'
 	) : ()),
-	LIBS         => ['-lpcap -lnet'],
-	(recent_pcap() ? (
-		DEFINE     => '-DHAVE_RECENT_PCAP'
-	) : ()),
-	INC          => '-I.' . ( -d '/usr/include/pcap' ? ' -I/usr/include/pcap' : '' ),
-	OBJECT       => <<'EOF',
-$(BASEEXT)$(OBJ_EXT)
-cdp$(OBJ_EXT)
-cdp_address$(OBJ_EXT)
-cdp_checksum$(OBJ_EXT)
-cdp_encoding$(OBJ_EXT)
-cdp_ip_prefix$(OBJ_EXT)
-cdp_llist$(OBJ_EXT)
-cdp_packet$(OBJ_EXT)
-EOF
+	INC          => "@config{qw(LIBPCAP_CPPFLAGS LIBNET_CPPFLAGS)}",
+	LIBS         => [ "@config{qw(LIBPCAP_LDFLAGS LIBPCAP_LIBS LIBNET_LDFLAGS LIBNET_LIBS)}" ],
+	MYEXTLIB     => 'libcdp/src/libcdp.a',
 );
 
 if (eval { require ExtUtils::Constant; 1 }) {
- 	my @names = (qw(
-CDP_PROMISCUOUS
-CDP_RECV_NONBLOCK CDP_RECV_DECODE_ERRORS
-CDP_ADDR_PROTO_CLNP CDP_ADDR_PROTO_IPV4 CDP_ADDR_PROTO_IPV6
-CDP_ADDR_PROTO_DECNET CDP_ADDR_PROTO_APPLETALK CDP_ADDR_PROTO_IPX
-CDP_ADDR_PROTO_VINES CDP_ADDR_PROTO_XNS CDP_ADDR_PROTO_APOLLO
-CDP_CAP_ROUTER CDP_CAP_TRANSPARENT_BRIDGE CDP_CAP_SOURCE_BRIDGE
-CDP_CAP_SWITCH CDP_CAP_HOST CDP_CAP_IGMP CDP_CAP_REPEATER
-	));
+	my @names = qw(
+		CDP_PROMISCUOUS CDP_DISABLE_RECV CDP_DISABLE_SEND
+		CDP_RECV_NONBLOCK CDP_RECV_DECODE_ERRORS
+		CDP_ADDR_PROTO_CLNP CDP_ADDR_PROTO_IPV4 CDP_ADDR_PROTO_IPV6
+		CDP_ADDR_PROTO_DECNET CDP_ADDR_PROTO_APPLETALK CDP_ADDR_PROTO_IPX
+		CDP_ADDR_PROTO_VINES CDP_ADDR_PROTO_XNS CDP_ADDR_PROTO_APOLLO
+		CDP_CAP_ROUTER CDP_CAP_TRANSPARENT_BRIDGE CDP_CAP_SOURCE_BRIDGE
+		CDP_CAP_SWITCH CDP_CAP_HOST CDP_CAP_IGMP CDP_CAP_REPEATER
+	);
 	ExtUtils::Constant::WriteConstants(
-		NAME         => 'Net::CDP',
+		NAME         => 'Net::CDP::Constants',
 		NAMES        => \@names,
 		DEFAULT_TYPE => 'UV',
 		C_FILE       => 'const-c.inc',

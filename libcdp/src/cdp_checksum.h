@@ -1,11 +1,11 @@
 /*
- * $Id: cdp_checksum.h,v 1.1.1.1 2004/06/04 06:01:29 mchapman Exp $
+ * $Id: cdp_checksum.h,v 1.1 2004/09/02 04:25:06 mchapman Exp $
  */
 
 #ifndef _CDP_CHECKSUM_H
 #define _CDP_CHECKSUM_H
 
-#include <sys/types.h>
+#include <config.h>
 
 /*
  * Calculate checksum for buffer.

@@ -11,6 +11,7 @@ u_int16_t	T_UV
 u_int32_t	T_UV
 
 const char *	T_PV
+string_undef	T_PV_UNDEF
 
 charPtr	T_PV
 char **	T_ARRAY
@@ -23,7 +24,13 @@ T_PTROBJ_SPECIAL
 	} else
 		croak(\"$var is not of type ${(my $ntt=$ntype)=~s/_/::/g;\$ntt}\")
 
+T_PV_UNDEF
+	SvGETMAGIC($arg);
+	STMT_START {
+		STRLEN tmp;
+		$var = ($type) (SvOK($arg) ? SvPV_nomg($arg, tmp) : NULL);
+	} STMT_END;
+
 OUTPUT
 T_PTROBJ_SPECIAL
 	sv_setref_pv($arg, \"${(my $ntt=$ntype)=~s/_/::/g;\$ntt}\", (void*)$var);
-
