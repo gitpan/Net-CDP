@@ -1,6 +1,6 @@
-use Test::More tests => 38;
+use Test::More tests => 42;
 
-BEGIN { use_ok('Net::CDP::Manager'); }
+BEGIN { use_ok('Net::CDP::Manager'); use_ok('Net::CDP', ':general'); }
 
 my @available = cdp_ports;
 ok(1, 'cdp_ports');
@@ -9,6 +9,12 @@ my $unknown_device = 'foo';
 while (grep { $_ eq $unknown_device } @available) {
 	$unknown_device .= 'foo';
 }
+
+ok(defined cdp_flags, 'Flags exists and is not undefined');
+cdp_flags CDP_PROMISCUOUS;
+is(cdp_flags, CDP_PROMISCUOUS, 'Flags can be set');
+cdp_flags 0;
+is(cdp_flags, 0, 'Flags can be cleared');
 
 my @x;
 

@@ -1,6 +1,11 @@
 Revision history for Net::CDP
 =============================
 
+*** 0.05 Thu Jun  6 2004
+
+By default, ports will be opened in non-promiscuous mode and a multicast
+address will be added to them instead.
+
 *** 0.04 Wed Jun  9 2004
 
 Fixed checksum bug (again!).

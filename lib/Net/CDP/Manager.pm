@@ -21,7 +21,7 @@ require Exporter;
 	cdp_managed cdp_hard cdp_soft cdp_active cdp_inactive
 	cdp_recv cdp_send
 	cdp_loop
-	cdp_template
+	cdp_template cdp_flags
 );
 
 use Net::CDP qw(:recv);
@@ -30,6 +30,7 @@ use Time::HiRes qw(gettimeofday);
 my %managed;
 my %hard;
 my $template = new Net::CDP::Packet();
+my $flags = 0;
 
 {
 	my $ref; $ref = \$ref;
@@ -96,6 +97,9 @@ Net::CDP::Manager - Cisco Discover Protocol (CDP) manager
   
   # The template Net::CDP::Packet object
   $template     = cdp_template;
+	
+	# Flags used when creating Net::CDP objects
+	$flags        = cdp_flags;
 
 =head1 DESCRIPTION
 
@@ -137,7 +141,7 @@ sub _cdp_manage($@) {
 		next if exists $add{$_};
 		next if $hard && exists $managed{$_} && defined $managed{$_};
 		push @added, $_ unless exists $managed{$_};
-		$add{$_} = $hard ? _carp { new Net::CDP($_) } : undef;
+		$add{$_} = $hard ? _carp { new Net::CDP($_, $flags) } : undef;
 	}
 	foreach (keys %add) {
 		$managed{$_} = $add{$_} unless $managed{$_};
@@ -304,7 +308,7 @@ sub cdp_recv(;$) {
 		my @ports;
 		my $rin = '';
 		foreach (keys %managed) {
-			my $cdp = ($managed{$_} ||= _try_new_cdp($_));
+			my $cdp = ($managed{$_} ||= _try_new_cdp($_, $flags));
 			next unless $cdp;
 			my $fd = $cdp->_fd;
 			$ports[$fd] = $_;
@@ -370,7 +374,7 @@ sub cdp_send() {
 	my @successful;
 	
 	foreach (keys %managed) {
-		my $cdp = ($managed{$_} ||= _try_new_cdp($_));
+		my $cdp = ($managed{$_} ||= _try_new_cdp($_, $flags));
 		next unless $cdp;
 		my $packet = clone $template;
 		$packet->addresses([$cdp->addresses]);
@@ -505,6 +509,29 @@ sub cdp_template(;$) {
 	}
 
 	$template;
+}
+
+=item B<cdp_flags>
+
+    $flags = cdp_flags()
+    $flags = cdp_flags($new_flags)
+
+Returns the current flags this module will use when creating L<Net::CDP>
+objects. If C<$new_flags> is supplied and defined, the flags will be updated
+first. See L<Net::CDP/"new"> for a list of permitted flags.
+
+By default, no flags will be used (cdp_flags() will return 0). Any set flags
+will be used when creating new L<Net::CDP> objects in subsequent calls to
+L<"cdp_manage"> and L<"cdp_manage_soft">, and when soft ports become active
+in L<"cdp_recv">, L<"cdp_send"> and L<"cdp_loop">.
+
+=cut
+
+sub cdp_flags(;$) {
+	my $new_flags = shift;
+
+	$flags = 0+$new_flags if defined $new_flags;
+	$flags;
 }
 
 =back

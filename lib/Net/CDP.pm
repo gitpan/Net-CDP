@@ -10,13 +10,16 @@ use Carp;
 
 use vars qw($VERSION @ISA $AUTOLOAD @EXPORT @EXPORT_OK %EXPORT_TAGS);
 
-$VERSION = '0.04';
+$VERSION = '0.05';
 
 require Exporter;
 require DynaLoader;
 use AutoLoader;
 @ISA = qw(Exporter DynaLoader);
 
+my @EXPORT_GENERAL = qw(
+	CDP_PROMISCUOUS
+);
 my @EXPORT_RECV = qw(
 	CDP_RECV_NONBLOCK CDP_RECV_DECODE_ERRORS
 );
@@ -31,8 +34,9 @@ my @EXPORT_PROTOS = qw(
 );
 
 @EXPORT = qw();
-@EXPORT_OK = (@EXPORT_RECV, @EXPORT_CAPS, @EXPORT_PROTOS, );
+@EXPORT_OK = (@EXPORT_GENERAL, @EXPORT_RECV, @EXPORT_CAPS, @EXPORT_PROTOS, );
 %EXPORT_TAGS = (
+	general => [ @EXPORT_GENERAL, ],
 	recv => [ @EXPORT_RECV, ],
 	caps => [ @EXPORT_CAPS, ],
 	protos => [ @EXPORT_PROTOS, ],
@@ -108,6 +112,7 @@ L<Net::CDP::Packet> object.
 
     $cdp = new Net::CDP()
     $cdp = new Net::CDP($port)
+    $cdp = new Net::CDP($port, $flags)
 
 Returns a new Net::CDP object.
 
@@ -117,6 +122,22 @@ your system is used (typically, this is the first Ethernet device -- "eth0", for
 instance).
 
 You can use the L</"ports"> class method to retrieve a list of valid port names.
+
+If specified, C<$flags> is a bitmask specifying one or more of the following
+constants:
+
+=over
+
+=item CDP_PROMISCUOUS
+
+Enable promiscuous mode on the specified device. If this is not specified,
+Net::CDP attempts to use a multicast ethernet address instead, which may not
+work on some interfaces.
+
+=back
+
+These constants can be exported from Net::CDP using the tag C<:general>. See
+L<Exporter>.
 
 =back
 

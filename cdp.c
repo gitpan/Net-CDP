@@ -13,9 +13,23 @@
 #include <errno.h>
 #endif /* !HAVE_RECENT_PCAP */
 
+#include <sys/socket.h>
+#include <features.h>    /* for the glibc version number */
+#if __GLIBC__ >= 2 && __GLIBC_MINOR__ >= 1
+#include <netpacket/packet.h>
+#include <net/ethernet.h>     /* the L2 protocols */
+#else
+#include <asm/types.h>
+#include <linux/if_packet.h>
+#include <linux/if_ether.h>   /* The L2 protocols */
+#endif
+
 #include "cdp_encoding.h"
 
 #define BPF_FILTER "ether host 01:00:0c:cc:cc:cc and ether[20:2] = 0x2000"
+
+static const u_int8_t cdp_multicast_mac[] =
+	{ 0x01, 0x00, 0x0c, 0xcc, 0xcc, 0xcc };
 
 static void
 callback(u_int8_t *user, const struct pcap_pkthdr *header, const u_int8_t *data) {
@@ -28,7 +42,35 @@ callback(u_int8_t *user, const struct pcap_pkthdr *header, const u_int8_t *data)
 	cdp->data = data;
 }
 
+static int
+multicast(const cdp_t *cdp, int add) {
+	int result;
+	
+	struct ifreq ifr;
+	struct packet_mreq mreq;
+	
+	memset(&ifr, 0, sizeof(struct ifreq));
+	memcpy(ifr.ifr_name, cdp->port, sizeof ifr.ifr_name);
+	result = ioctl(pcap_fileno(cdp->pcap), SIOCGIFINDEX, &ifr);
+	
+	if (result < 0)
+		return result;
+	
+	mreq.mr_ifindex = ifr.ifr_ifindex;
+	mreq.mr_type = PACKET_MR_MULTICAST;
+	mreq.mr_alen = 6;
+	memcpy(mreq.mr_address, cdp_multicast_mac, 6);
+	return setsockopt(
+		pcap_fileno(cdp->pcap),
+		SOL_PACKET,
+		add ? PACKET_ADD_MEMBERSHIP : PACKET_DROP_MEMBERSHIP,
+		&mreq,
+		sizeof(struct packet_mreq)
+	);
+}
+
 #ifdef HAVE_RECENT_PCAP
+		
 cdp_llist_t *
 cdp_get_ports(char *errors) {
 	char *pcap_errors;
@@ -55,7 +97,9 @@ cdp_get_ports(char *errors) {
 	free(pcap_errors);
 	return result;
 }
+
 #else /* HAVE_RECENT_PCAP */
+
 cdp_llist_t *
 cdp_get_ports(char *errors) {
 	/* This code is lifted from Ethereal 0.9.13 */
@@ -210,10 +254,11 @@ cdp_get_ports(char *errors) {
 	cdp_llist_free(loopback_list);
 	return normal_list;
 }
+
 #endif /* !HAVE_RECENT_PCAP */
 
 cdp_t *
-cdp_new(const char *port, char *errors) {
+cdp_new(const char *port, int flags, char *errors) {
 	cdp_t *cdp;
 
 	char *pcap_errors;
@@ -232,6 +277,7 @@ cdp_new(const char *port, char *errors) {
 	errors[0] = '\0';
 	
 	cdp = (cdp_t *)calloc(1, sizeof(cdp_t));
+	cdp->flags = flags;
 	
 #ifdef HAVE_RECENT_PCAP
 	{
@@ -385,30 +431,40 @@ cdp_new(const char *port, char *errors) {
 		goto fail;
 	}
 	
-	if (!(cdp->pcap = pcap_open_live(cdp->port, BUFSIZ, 1, 0, pcap_errors))) {
+	if (!(cdp->pcap = pcap_open_live(cdp->port, BUFSIZ,
+				cdp->flags & CDP_PROMISCUOUS, 0, pcap_errors))) {
 		strncpy(errors, pcap_errors, CDP_ERRBUF_SIZE - 1);
 		errors[CDP_ERRBUF_SIZE - 1] = '\0';
 		goto fail;
+	}
+	if (!(cdp->flags & CDP_PROMISCUOUS)) {
+		if (multicast(cdp, 1) < 0) {
+			snprintf(errors, (CDP_ERRBUF_SIZE - 1) * sizeof(char),
+				"Could not enable multicast address for interface %s: %s",
+				cdp->port, strerror(errno));
+			errors[CDP_ERRBUF_SIZE - 1] = '\0';
+			goto fail;
+		}
 	}
 	
 	if (pcap_compile(cdp->pcap, &filter, BPF_FILTER, 1, mask)) {
 		strncpy(errors, pcap_geterr(cdp->pcap), CDP_ERRBUF_SIZE - 1);
 		errors[CDP_ERRBUF_SIZE - 1] = '\0';
-		goto fail;
+		goto fail_multi;
 	}
 	
 	if (pcap_setfilter(cdp->pcap, &filter)) {
 		strncpy(errors, pcap_geterr(cdp->pcap), CDP_ERRBUF_SIZE - 1);
 		errors[CDP_ERRBUF_SIZE - 1] = '\0';
 		pcap_freecode(&filter);
-		goto fail;
+		goto fail_multi;
 	}
 	pcap_freecode(&filter);
 	
 	if (!(cdp->libnet = libnet_init(LIBNET_LINK, cdp->port, libnet_errors))) {
 		strncpy(errors, libnet_errors, CDP_ERRBUF_SIZE - 1);
 		errors[CDP_ERRBUF_SIZE - 1] = '\0';
-		goto fail;
+		goto fail_multi;
 	}
 
 	/*
@@ -417,7 +473,7 @@ cdp_new(const char *port, char *errors) {
 	if (!(hwaddr = libnet_get_hwaddr(cdp->libnet))) {
 		strncpy(errors, libnet_geterror(cdp->libnet), CDP_ERRBUF_SIZE - 1);
 		errors[CDP_ERRBUF_SIZE - 1] = '\0';
-		goto fail;
+		goto fail_multi;
 	}
 	memcpy(cdp->mac, hwaddr->ether_addr_octet, 6 * sizeof(u_int8_t));
 	
@@ -425,6 +481,9 @@ cdp_new(const char *port, char *errors) {
 	free(pcap_errors);
 	return cdp;
 
+fail_multi:
+	if (!(cdp->flags & CDP_PROMISCUOUS)) multicast(cdp, 0); /* Ignore errors */
+	
 fail:
 	cdp_free(cdp);
 	free(libnet_errors);
@@ -437,7 +496,10 @@ cdp_free(cdp_t *cdp) {
 	if (cdp->libnet) libnet_destroy(cdp->libnet);
 	if (cdp->pcap) pcap_close(cdp->pcap);
 	if (cdp->addresses) cdp_llist_free(cdp->addresses);
-	if (cdp->port) free(cdp->port);
+	if (cdp->port) {
+		multicast(cdp, 0); /* Ignore errors */
+		free(cdp->port);
+	}
 	free(cdp);
 }
 

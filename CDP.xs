@@ -85,15 +85,16 @@ PPCODE:
 	cdp_llist_free(ports);
 
 Net_CDP
-new(CLASS, device=NULL)
+new(CLASS, device=NULL, flags=0)
 	SV *CLASS
 	char *device
+	int flags
 PROTOTYPE: $;$
 PREINIT:
 	dMY_CXT;
 CODE:
 	MY_CXT.errors[0] = '\0';	
-	RETVAL = cdp_new(device, MY_CXT.errors);
+	RETVAL = cdp_new(device, flags, MY_CXT.errors);
 	if (!RETVAL)
 		croak(MY_CXT.errors);
 OUTPUT:

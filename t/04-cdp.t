@@ -1,6 +1,6 @@
 use Test::More tests => 19;
 
-BEGIN { use_ok('Net::CDP', ':recv'); }
+BEGIN { use_ok('Net::CDP', ':recv', ':general'); }
 
 my @available = Net::CDP::ports();
 ok(1, 'Net::CDP::ports');

@@ -97,6 +97,11 @@ typedef const cdp_llist_item_t *cdp_llist_iter_t;
 /******************************************************************************/
 
 /*
+ * cdp_new flags.
+ */
+#define CDP_PROMISCUOUS        0x01
+ 
+/*
  * cdp_recv flags.
  */
 #define CDP_RECV_NONBLOCK      0x01
@@ -114,6 +119,8 @@ typedef struct cdp {
 	pcap_t *pcap;
 	libnet_t *libnet;
 	
+	int flags;
+	
 	char *port;
 	u_int8_t mac[6];
 	cdp_llist_t *addresses;
@@ -122,7 +129,7 @@ typedef struct cdp {
 	const u_int8_t *data;
 } cdp_t;
 
-cdp_t * cdp_new(const char *, char *);
+cdp_t * cdp_new(const char *, int, char *);
 void cdp_free(cdp_t *);
 
 const char * cdp_get_port(cdp_t *);
