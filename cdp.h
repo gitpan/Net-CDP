@@ -1,5 +1,5 @@
 /*
- * $Id: cdp.h,v 1.1.1.1 2004/06/04 06:01:29 mchapman Exp $
+ * $Id: cdp.h,v 1.2 2004/06/08 01:36:36 mchapman Exp $
  */
 
 #ifndef _CDP_H
@@ -18,6 +18,10 @@ extern "C" {
 #endif
 
 /******************************************************************************/
+
+#define CDP_VERSION "0.03"
+#define CDP_VERSION_MAJOR 0
+#define CDP_VERSION_MINOR 3
 
 /*
  * The size of the error buffer to be passed to functions that expect one.

@@ -1,5 +1,5 @@
 /*
- * $Id: cdp_checksum.c,v 1.2 2004/06/04 06:11:44 mchapman Exp $
+ * $Id: cdp_checksum.c,v 1.3 2004/06/07 03:15:56 mchapman Exp $
  */
 
 #include "cdp.h"
@@ -18,7 +18,7 @@ cdp_checksum(const u_int8_t *data, u_int16_t length) {
 		length -= sizeof(u_int16_t);
 	}
 	if (length)
-		sum += htons(((u_int16_t)*data));
+		sum += htons(*d);
 	
 	sum = (sum >> 16) + (sum & 0xffff);
 	sum += (sum >> 16);

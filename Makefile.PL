@@ -7,9 +7,9 @@ use ExtUtils::MakeMaker;
 sub recent_pcap {
 	require DynaLoader;
 	my @pcap = DynaLoader::dl_findfile('-lpcap')
-        	or return 0; # This'll be catched in WriteMakefile
+		or return 0; # This'll be catched in WriteMakefile
 	my $pcap = DynaLoader::dl_load_file($pcap[0])
-	        or return 0; # Meh, stuff'll break later
+		or return 0; # Meh, stuff'll break later
 	return
 		defined DynaLoader::dl_find_symbol($pcap, 'pcap_findalldevs') &&
 		defined DynaLoader::dl_find_symbol($pcap, 'pcap_setnonblock');
@@ -21,11 +21,11 @@ WriteMakefile(
 	PREREQ_PM    => { Carp => 0, 'Test::More' => 0, },
 	($] >= 5.005 ? (
 		ABSTRACT_FROM  => 'lib/Net/CDP.pm',
-		AUTHOR         => 'Michael Chapman <mike.chapman@optusnet.com.au>'
+		AUTHOR         => 'Michael Chapman <cpan@very.puzzling.org>'
 	) : ()),
 	LIBS         => ['-lpcap -lnet'],
 	(recent_pcap() ? (
-		DEFINE       => '-DHAVE_RECENT_PCAP'
+		DEFINE     => '-DHAVE_RECENT_PCAP'
 	) : ()),
 	INC          => '-I.' . ( -d '/usr/include/pcap' ? ' -I/usr/include/pcap' : '' ),
 	OBJECT       => <<'EOF',

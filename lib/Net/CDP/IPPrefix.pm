@@ -1,7 +1,7 @@
 package Net::CDP::IPPrefix;
 
 #
-# $Id: IPPrefix.pm,v 1.1.1.1 2004/06/04 06:01:29 mchapman Exp $
+# $Id: IPPrefix.pm,v 1.2 2004/06/07 00:16:21 mchapman Exp $
 #
 
 use strict;
@@ -9,7 +9,7 @@ use Carp;
 
 use vars qw($VERSION);
 
-$VERSION = (qw$Revision: 1.1.1.1 $)[1];
+$VERSION = (qw$Revision: 1.2 $)[1];
 
 use Net::CDP;
 
@@ -147,7 +147,7 @@ L<Net::CDP>
 
 =head1 AUTHOR
 
-Michael Chapman, E<lt>mike.chapman@optusnet.com.auE<gt>
+Michael Chapman, E<lt>cpan@very.puzzling.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 

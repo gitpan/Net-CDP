@@ -1,7 +1,7 @@
 package Net::CDP;
 
 #
-# $Id: CDP.pm,v 1.1.1.1 2004/06/04 06:01:29 mchapman Exp $
+# $Id: CDP.pm,v 1.3 2004/06/08 01:14:23 mchapman Exp $
 #
 
 use 5.00503;
@@ -10,7 +10,7 @@ use Carp;
 
 use vars qw($VERSION @ISA $AUTOLOAD @EXPORT @EXPORT_OK %EXPORT_TAGS);
 
-$VERSION = '0.02';
+$VERSION = '0.03';
 
 require Exporter;
 require DynaLoader;
@@ -195,7 +195,7 @@ L<Net::CDP::Packet>
 
 =head1 AUTHOR
 
-Michael Chapman, E<lt>mike.chapman@optusnet.com.auE<gt>
+Michael Chapman, E<lt>cpan@very.puzzling.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
