@@ -1,18 +1,24 @@
 Revision history for Net::CDP
 =============================
 
-*** 0.03 Fri Jun  8
+*** 0.04 Wed Jun  9 2004
+
+Fixed checksum bug (again!).
+
+Removed unnecessary debugging output.
+
+*** 0.03 Tue Jun  8 2004
 
 Fixed my email address.
 
 Fixed checksum bug.
 
-*** 0.02 Fri Jun  4
+*** 0.02 Fri Jun  4 2004
 
 Initial released version.
 
-*** 0.01 Sun Mar 21
+*** 0.01 Sun Mar 21 2004
 
 Original version (unreleased).
 
-$Id: Changes,v 1.4 2004/06/08 01:14:20 mchapman Exp $
+$Id: Changes,v 1.8 2004/06/09 00:43:49 mchapman Exp $

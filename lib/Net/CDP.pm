@@ -1,7 +1,7 @@
 package Net::CDP;
 
 #
-# $Id: CDP.pm,v 1.3 2004/06/08 01:14:23 mchapman Exp $
+# $Id: CDP.pm,v 1.4 2004/06/09 00:28:13 mchapman Exp $
 #
 
 use 5.00503;
@@ -10,7 +10,7 @@ use Carp;
 
 use vars qw($VERSION @ISA $AUTOLOAD @EXPORT @EXPORT_OK %EXPORT_TAGS);
 
-$VERSION = '0.03';
+$VERSION = '0.04';
 
 require Exporter;
 require DynaLoader;

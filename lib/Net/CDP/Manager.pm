@@ -1,7 +1,7 @@
 package Net::CDP::Manager;
 
 #
-# $Id: Manager.pm,v 1.2 2004/06/07 00:16:21 mchapman Exp $
+# $Id: Manager.pm,v 1.3 2004/06/08 08:38:36 mchapman Exp $
 #
 
 use strict;
@@ -9,7 +9,7 @@ use Carp;
 
 use vars qw($VERSION @ISA $AUTOLOAD @EXPORT @EXPORT_OK %EXPORT_TAGS);
 
-$VERSION = (qw$Revision: 1.2 $)[1];
+$VERSION = (qw$Revision: 1.3 $)[1];
 
 require Exporter;
 @ISA = qw(Exporter);
@@ -383,7 +383,6 @@ sub cdp_send() {
 		unless (defined $bytes) {
 			croak "Port $_ failed: $@"
 				if $hard{$_};
-print STDERR "cdp_send $_\n";
 			$managed{$_} = undef;
 		}
 	}
