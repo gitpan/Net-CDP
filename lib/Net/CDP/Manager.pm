@@ -1,7 +1,7 @@
 package Net::CDP::Manager;
 
 #
-# $Id: Manager.pm,v 1.3 2004/06/08 08:38:36 mchapman Exp $
+# $Id: Manager.pm,v 1.4 2004/06/10 11:41:00 mchapman Exp $
 #
 
 use strict;
@@ -9,7 +9,7 @@ use Carp;
 
 use vars qw($VERSION @ISA $AUTOLOAD @EXPORT @EXPORT_OK %EXPORT_TAGS);
 
-$VERSION = (qw$Revision: 1.3 $)[1];
+$VERSION = (qw$Revision: 1.4 $)[1];
 
 require Exporter;
 @ISA = qw(Exporter);

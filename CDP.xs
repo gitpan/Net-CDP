@@ -1,5 +1,5 @@
 /*
- * $Id: CDP.xs,v 1.1.1.1 2004/06/04 06:01:29 mchapman Exp $
+ * $Id: CDP.xs,v 1.3 2004/06/23 10:03:37 mchapman Exp $
  */
 
 #include "EXTERN.h"
@@ -287,6 +287,7 @@ PPCODE:
 	if (items > 1) {
 		cdp_llist_t *addresses;
 
+		SvGETMAGIC(new_addresses);
 		if (!SvOK(new_addresses)) {
 			addresses = NULL;
 		} else {
@@ -400,6 +401,7 @@ PPCODE:
 	if (items > 1) {
 		cdp_llist_t *ip_prefixes;
 
+		SvGETMAGIC(new_ip_prefixes);
 		if (!SvOK(new_ip_prefixes)) {
 			ip_prefixes = NULL;
 		} else {
@@ -412,9 +414,10 @@ PPCODE:
 			ip_prefixes = cdp_llist_new((cdp_dup_fn_t)cdp_ip_prefix_dup, (cdp_free_fn_t)cdp_ip_prefix_free);
 			for (i = 0; i <= av_len(a); i++) {
 				SV **t = av_fetch(a, i, 0);
-				if (t && sv_derived_from(*t, "Net::CDP::IPPrefix"))
+				if (t && sv_derived_from(*t, "Net::CDP::IPPrefix")) {
+					SvGETMAGIC(*t);
 					cdp_llist_append(ip_prefixes, (struct cdp_ip_prefix *)SvIV((SV *)SvRV(*t)));
-				else {
+				} else {
 					cdp_llist_free(ip_prefixes);
 					croak("Element %d is not of type Net::CDP::IPPrefix", i);
 				}

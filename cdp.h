@@ -1,5 +1,5 @@
 /*
- * $Id: cdp.h,v 1.2 2004/06/08 01:36:36 mchapman Exp $
+ * $Id: cdp.h,v 1.3 2004/06/10 11:40:56 mchapman Exp $
  */
 
 #ifndef _CDP_H

@@ -1,6 +1,10 @@
 Revision history for Net::CDP
 =============================
 
+*** 0.06 Wed Jun  6 2004
+
+Handle 'get' magic properly.
+
 *** 0.05 Thu Jun  6 2004
 
 By default, ports will be opened in non-promiscuous mode and a multicast
@@ -26,4 +30,4 @@ Initial released version.
 
 Original version (unreleased).
 
-$Id: Changes,v 1.8 2004/06/09 00:43:49 mchapman Exp $
+$Id: Changes,v 1.10 2004/06/23 10:03:37 mchapman Exp $

@@ -1,5 +1,5 @@
 /*
- * $Id: cdp.c,v 1.1.1.1 2004/06/04 06:01:29 mchapman Exp $
+ * $Id: cdp.c,v 1.2 2004/06/10 11:40:56 mchapman Exp $
  */
 
 #include "cdp.h"
