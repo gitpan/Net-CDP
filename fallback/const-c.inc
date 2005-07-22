@@ -178,11 +178,11 @@ my @names = (qw(CDP_ADDR_PROTO_APOLLO CDP_ADDR_PROTO_APPLETALK
 	       CDP_PROMISCUOUS CDP_RECV_DECODE_ERRORS CDP_RECV_NONBLOCK));
 
 print constant_types(); # macro defs
-foreach (C_constant ("Net::CDP", 'constant', 'UV', $types, undef, 3, @names) ) {
+foreach (C_constant ("Net::CDP::Constants", 'constant', 'UV', $types, undef, 3, @names) ) {
     print $_, "\n"; # C constant subs
 }
 print "#### XS Section:\n";
-print XS_constant ("Net::CDP", $types);
+print XS_constant ("Net::CDP::Constants", $types);
 __END__
    */
 

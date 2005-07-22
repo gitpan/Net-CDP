@@ -1,13 +1,11 @@
 /*
- * $Id: cdp_encoding.h,v 1.1 2004/09/02 04:25:06 mchapman Exp $
+ * $Id: encoding.h,v 1.1 2005/07/20 13:44:13 mchapman Exp $
  */
 
 #ifndef _CDP_ENCODING_H
 #define _CDP_ENCODING_H
 
-#include <config.h>
-
-#include "cdp.h"
+#include <system.h>
 
 /*
  * CDP chunk types.
@@ -25,8 +23,8 @@
 #define CDP_TYPE_DUPLEX            0x000b
 #define CDP_TYPE_UNKNOWN_0x000c    0x000c
 #define CDP_TYPE_UNKNOWN_0x000d    0x000d
-#define CDP_TYPE_APPLIANCE_ID      0x000e
-#define CDP_TYPE_UNKNOWN_0x000f    0x000f
+#define CDP_TYPE_APPLIANCE_REPLY   0x000e
+#define CDP_TYPE_APPLIANCE_QUERY   0x000f
 #define CDP_TYPE_POWER_CONSUMPTION 0x0010
 #define CDP_TYPE_MTU               0x0011
 #define CDP_TYPE_EXTENDED_TRUST    0x0012
@@ -36,8 +34,8 @@
 #define CDP_TYPE_MGMT_ADDRESS      0x0016
 #define CDP_TYPE_LOCATION          0x0017
 
-struct cdp_packet * cdp_decode(const u_int8_t *, u_int16_t, char *);
-u_int16_t cdp_decode_checksum(const u_int8_t *, u_int16_t);
-u_int16_t cdp_encode(const struct cdp_packet *, u_int8_t *, u_int16_t);
+struct cdp_packet * cdp_decode(const void *, size_t, char *);
+uint16_t cdp_decode_checksum(const void *, size_t);
+size_t cdp_encode(const struct cdp_packet *, void *, size_t);
 
 #endif /* _CDP_ENCODING_H */

@@ -16,6 +16,7 @@ Prerequisites
   version 1.1.1 or later.
 - libpcap 0.6 or later
 - Carp::Clan
+- Time::HiRes
 
 For testing, you will also require Test::More, and (optionally) Test::Pod.
 
@@ -83,10 +84,10 @@ miss it.
 Copyright and License
 ---------------------
 
-Copyright (C) 2004 by Michael Chapman
+Copyright (C) 2005 by Michael Chapman
 
 libcdp is released under the terms and conditions of the GNU Library General
 Public License version 2. Net::CDP may be redistributed and/or modified under
 the same terms as Perl itself.
 
-$Id: README,v 1.6 2004/09/02 05:17:38 mchapman Exp $
+$Id: README,v 1.7 2005/06/27 12:59:03 mchapman Exp $

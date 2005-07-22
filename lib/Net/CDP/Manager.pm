@@ -1,7 +1,7 @@
 package Net::CDP::Manager;
 
 #
-# $Id: Manager.pm,v 1.11 2004/09/02 05:42:59 mchapman Exp $
+# $Id: Manager.pm,v 1.15 2005/07/22 02:44:01 mchapman Exp $
 #
 
 use strict;
@@ -9,7 +9,7 @@ use Carp::Clan qw(^Net::CDP);
 
 use vars qw($VERSION @ISA $AUTOLOAD @EXPORT @EXPORT_OK %EXPORT_TAGS);
 
-$VERSION = (qw$Revision: 1.11 $)[1];
+$VERSION = (qw$Revision: 1.15 $)[1];
 
 require Exporter;
 @ISA = qw(Exporter);
@@ -25,11 +25,12 @@ require Exporter;
 );
 
 use Net::CDP;
+use Net::CDP::Packet;
 use Time::HiRes qw(gettimeofday);
 
 my %managed;
 my %hard;
-my $template = new Net::CDP::Packet();
+my $template = eval { new Net::CDP::Packet() } or confess $@;
 my %args = (promiscuous => 0);
 
 {
@@ -52,7 +53,7 @@ sub _try_new_cdp(@) {
 
 =head1 NAME
 
-Net::CDP::Manager - Cisco Discover Protocol (CDP) manager
+Net::CDP::Manager - Cisco Discovery Protocol (CDP) manager
 
 =head1 SYNOPSIS
 
@@ -86,10 +87,10 @@ Net::CDP::Manager - Cisco Discover Protocol (CDP) manager
   cdp_loop(\&callback);
   
   # The template Net::CDP::Packet object
-  $template     = cdp_template;
-	
-	# Arguments used when creating Net::CDP objects
-	%args        = cdp_args;
+  $template = cdp_template;
+  	
+  # Arguments used when creating Net::CDP objects
+  %args     = cdp_args;
 
 =head1 DESCRIPTION
 
@@ -583,7 +584,7 @@ Michael Chapman, E<lt>cpan@very.puzzling.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2004 by Michael Chapman
+Copyright (C) 2005 by Michael Chapman
 
 libcdp is released under the terms and conditions of the GNU Library General
 Public License version 2. Net::CDP may be redistributed and/or modified under

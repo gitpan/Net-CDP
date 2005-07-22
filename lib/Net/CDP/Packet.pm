@@ -1,7 +1,7 @@
 package Net::CDP::Packet;
 
 #
-# $Id: Packet.pm,v 1.3 2004/09/02 04:25:04 mchapman Exp $
+# $Id: Packet.pm,v 1.5 2005/07/20 13:44:13 mchapman Exp $
 #
 
 use 5.00503;
@@ -10,7 +10,7 @@ use Carp::Clan qw(^Net::CDP);
 
 use vars qw($VERSION @ISA $AUTOLOAD @EXPORT @EXPORT_OK %EXPORT_TAGS);
 
-$VERSION = (qw$Revision: 1.3 $)[1];;
+$VERSION = (qw$Revision: 1.5 $)[1];;
 
 require Exporter;
 @ISA = qw(Exporter);
@@ -26,17 +26,8 @@ my @EXPORT_CAPS = qw(
 	caps => [ @EXPORT_CAPS, ],
 );
 
-sub AUTOLOAD {
-	my $constname;
-	($constname = $AUTOLOAD) =~ s/.*:://;
-	croak '&Net::CDP::constant not defined' if $constname eq 'constant';
-	my ($error, $val) = Net::CDP::Constants::constant($constname);
-	croak $error if $error;
-
-	no strict 'refs';
-	*$AUTOLOAD = sub { $val };
-	goto &$AUTOLOAD;
-}
+use Net::CDP;
+*AUTOLOAD = \&Net::CDP::AUTOLOAD;
 
 =head1 NAME
 
@@ -66,9 +57,11 @@ Net::CDP::Packet - Cisco Discovery Protocol (CDP) packet
   $native_vlan                 = $packet->native_vlan;
   $duplex                      = $packet->duplex;
   ($voice_vlan, $appliance_id) = $packet->voice_vlan;
+  $power_consumption           = $packet->power_consumption;
   $mtu                         = $packet->mtu;
   $trusted                     = $packet->trusted;
   $untrusted_cos               = $packet->untrusted_cos
+  @management_addresses        = $packet->management_addresses;
 
 =head1 DESCRIPTION
 
@@ -99,7 +92,11 @@ generate the following fields:
 
     Port ID: $cdp->port()
     Addresses: $cdp->addresses()
-    Duplex
+    Duplex: $cdp->duplex()
+
+=cut
+
+sub new($;$) { my ($class, $cdp) = @_; Net::CDP::_rethrow { defined($cdp) ? $class->_new($cdp) : $class->_new() } }
 
 =item B<clone>
 
@@ -304,6 +301,19 @@ Removes the Appliance VLAN-ID field completely.
 
 =back
 
+=item B<power_consumption>
+
+    $power_consumption = $packet->power_consumption()
+    $power_consumption = $packet->power_consumption($new_power_consumption)
+
+Returns this packet's Power Consumption field if present, C<undef>
+otherwise. If C<$new_power_consumption> is supplied, the field will be
+updated first. If C<$new_power_consumption> is undefined, the Power
+Consumption field is removed from the packet.
+
+The Power Consumption field contains the number of milliwatts (mW) the
+device requires using Power over Ethernet.
+
 =item B<mtu>
 
     $mtu = $packet->mtu()
@@ -342,6 +352,21 @@ The CoS for Untrusted Ports field contains the CoS (Class of Service) that will
 be applied when the port does not trust the CoS of incoming packets. See also
 the L</trusted> method.
 
+=item B<management_addresses>
+
+    @management_addresses = $packet->management_addresses()
+    @management_addresses
+        = $packet->management_addresses($new_addresses)
+
+Returns this packet's Management Addresses field as a list of L<Net::CDP::Address>
+objects. In scalar context, the number of addresses is returned, or C<undef> if
+no Addresses field is present.
+
+If C<$new_addresses> is supplied, the field will be updated first. If
+C<$new_addresses> is C<undef>, the Management Addresses field is removed from 
+the packet. Otherwise C<$new_addresses> must be a reference to an array of
+L<Net::CDP::Address> objects. The array may be empty.
+
 =back
 
 =head1 SEE ALSO
@@ -354,7 +379,7 @@ Michael Chapman, E<lt>cpan@very.puzzling.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2004 by Michael Chapman
+Copyright (C) 2005 by Michael Chapman
 
 libcdp is released under the terms and conditions of the GNU Library General
 Public License version 2. Net::CDP may be redistributed and/or modified under

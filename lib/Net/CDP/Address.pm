@@ -1,7 +1,7 @@
 package Net::CDP::Address;
 
 #
-# $Id: Address.pm,v 1.6 2004/09/02 04:25:04 mchapman Exp $
+# $Id: Address.pm,v 1.8 2005/07/20 13:44:13 mchapman Exp $
 #
 
 use 5.00503;
@@ -10,7 +10,7 @@ use Carp::Clan qw(^Net::CDP);
 
 use vars qw($VERSION @ISA $AUTOLOAD @EXPORT @EXPORT_OK %EXPORT_TAGS);
 
-$VERSION = (qw$Revision: 1.6 $)[1];
+$VERSION = (qw$Revision: 1.8 $)[1];
 
 require Exporter;
 @ISA = qw(Exporter);
@@ -27,19 +27,8 @@ my @EXPORT_PROTOS = qw(
 	protos => [ @EXPORT_PROTOS, ],
 );
 
-sub AUTOLOAD {
-	my $constname;
-	($constname = $AUTOLOAD) =~ s/.*:://;
-	croak '&Net::CDP::constant not defined' if $constname eq 'constant';
-	my ($error, $val) = Net::CDP::Constants::constant($constname);
-	croak $error if $error;
-
-	no strict 'refs';
-	*$AUTOLOAD = sub { $val };
-	goto &$AUTOLOAD;
-}
-
 use Net::CDP;
+*AUTOLOAD = \&Net::CDP::AUTOLOAD;
 
 =head1 NAME
 
@@ -61,8 +50,9 @@ Net::CDP::Address - Cisco Discovery Protocol (CDP) port address
 
 =head1 DESCRIPTION
 
-A Net::CDP::Address object represents a single addres in the Addresses field
-of a CDP packet. Net::CDP::Address objects are immutable.
+A Net::CDP::Address object represents a single addres in the Addresses or
+Management Addresses field of a CDP packet. Net::CDP::Address objects are
+immutable.
 
 =head1 CONSTRUCTORS
 
@@ -117,7 +107,7 @@ sub new($$;$) {
 		$protocol = CDP_ADDR_PROTO_IPV4();
 	}
 	croak "Cannot parse address '$ip'" unless defined $protocol;
-	return $class->_new_by_id($protocol, $packed);
+	Net::CDP::_rethrow { $class->_new_by_id($protocol, $packed) };
 }
 
 =item B<clone>
@@ -186,7 +176,7 @@ Michael Chapman, E<lt>cpan@very.puzzling.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2004 by Michael Chapman
+Copyright (C) 2005 by Michael Chapman
 
 libcdp is released under the terms and conditions of the GNU Library General
 Public License version 2. Net::CDP may be redistributed and/or modified under

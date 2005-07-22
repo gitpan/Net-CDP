@@ -22,12 +22,12 @@ constant(sv)
            Second, if present, is found value */
         switch (type) {
         case PERL_constant_NOTFOUND:
-          sv = sv_2mortal(newSVpvf("%s is not a valid Net::CDP macro", s));
+          sv = sv_2mortal(newSVpvf("%s is not a valid Net::CDP::Constants macro", s));
           PUSHs(sv);
           break;
         case PERL_constant_NOTDEF:
           sv = sv_2mortal(newSVpvf(
-	    "Your vendor has not defined Net::CDP macro %s, used", s));
+	    "Your vendor has not defined Net::CDP::Constants macro %s, used", s));
           PUSHs(sv);
           break;
 	/* Uncomment this if you need to return IVs
@@ -82,7 +82,7 @@ constant(sv)
           break; */
         default:
           sv = sv_2mortal(newSVpvf(
-	    "Unexpected return type %d while processing Net::CDP macro %s, used",
+	    "Unexpected return type %d while processing Net::CDP::Constants macro %s, used",
                type, s));
           PUSHs(sv);
         }

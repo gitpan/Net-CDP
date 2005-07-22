@@ -1,13 +1,22 @@
 # Process this file with autoconf to produce a configure script.
 
-AC_INIT([libcdp], [0.07], [libcdp@very.puzzling.org])
+AC_INIT([libcdp], [0.08], [libcdp@very.puzzling.org])
 AC_CONFIG_SRCDIR([src/cdp.c])
 AC_CONFIG_HEADER([config.h])
-AM_INIT_AUTOMAKE(${PACKAGE_NAME}, ${PACKAGE_VERSION})
+AM_INIT_AUTOMAKE([-Wall std-options])
+
+AC_CONFIG_MACRO_DIR(m4)
+AC_CONFIG_LIBOBJ_DIR(lib)
+
+gl_MODULES([calloc free malloc memcpy memset stdint strdup strerror xalloc])
+gl_SOURCE_BASE([lib])
+gl_M4_BASE([m4])
+gl_LIB([libmisc])
 
 # Checks for programs.
 AC_PROG_CC
 AM_PROG_CC_C_O
+gl_EARLY
 AC_PROG_RANLIB
 
 # Checks for libraries.
@@ -33,17 +42,43 @@ esac
 
 # Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS([fcntl.h locale.h stdlib.h sys/ioctl.h sys/socket.h sys/time.h sys/utsname.h], , , [-])
-
-# This requires some of these header files
+MAC_HEADER_ETHTOOL
+AC_CHECK_HEADERS_ONCE([
+	fcntl.h
+	linux/sockios.h
+	sys/socket.h
+	net/if.h
+	netinet/if_ether.h
+	netpacket/packet.h
+	sys/ioctl.h
+	sys/time.h
+	sys/utsname.h
+])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
+AM_C_PROTOTYPES
+AC_TYPE_SIZE_T
 
 # Checks for library functions.
+gl_INIT
 AC_PROG_GCC_TRADITIONAL
-AC_CHECK_FUNCS([gethostname memset socket strchr strdup strerror uname])
 MAC_SYS_MULTICAST
 
-AC_CONFIG_FILES([Makefile src/Makefile config.pl])
+AC_ARG_ENABLE(debug,
+	AS_HELP_STRING(--enable-debug, [include debug code (e.g. assertions)]))
+case "$enable_debug" in
+no|"")
+	AC_DEFINE(NDEBUG, 1, [Define to 1 to disable assertions])
+	;;
+*)
+	;;
+esac
+
+AC_CONFIG_FILES([
+	Makefile
+	lib/Makefile
+	src/Makefile
+	config.pl
+])
 AC_OUTPUT

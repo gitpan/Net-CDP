@@ -19,6 +19,7 @@ sub pretty { defined $_[0] ? @_ : '(unspecified)' }
 sub duplex { defined $_[0] ? ($_[0] ? 'full' : 'half') : '(unspecified)' }
 sub trust { defined $_[0] ? ($_[0] ? 'trusted' : 'untrusted') : '(unspecified)' }
 sub voice_vlan { defined $_[0] ? "Appliance $_[1], VLAN $_[0]" : '(unspecified)' }
+sub power_consumption { defined $_[0] ? "$_[0] mW" : '(unspecified)' }
 sub hexify { join ' ', map { map { sprintf '0x%02x', ord } split // } @_ }
 sub caps {
 	my $caps = shift;
@@ -69,9 +70,20 @@ sub callback {
 	print '  Native VLAN: ', pretty($packet->native_vlan), "\n";
 	print '  Duplex: ', duplex($packet->duplex), "\n";
 	print '  Voice VLAN: ', voice_vlan($packet->voice_vlan), "\n";
+	print '  Voice VLAN (query): ', voice_vlan($packet->voice_vlan_query), "\n";
+	print '  Power Consumption: ', power_consumption($packet->power_consumption), "\n";
 	print '  MTU: ', pretty($packet->mtu), "\n";
 	print '  Extended Trust: ', trust($packet->trusted), "\n";
 	print '  COS for Untrusted ports: ', pretty($packet->untrusted_cos), "\n";
+	if ($packet->management_addresses) {
+		print "  Management Addresses:\n";
+		foreach ($packet->management_addresses) {
+			print '    Protocol: ', pretty($_->protocol), "\n";
+			print '    Address: ', pretty($_->address), "\n";
+		}
+	} else {
+		print "  Management Addresses: (unspecified)\n";
+	}
 	print "\n";
 }
 

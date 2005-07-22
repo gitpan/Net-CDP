@@ -1,7 +1,7 @@
 package Net::CDP::IPPrefix;
 
 #
-# $Id: IPPrefix.pm,v 1.4 2004/09/02 04:25:04 mchapman Exp $
+# $Id: IPPrefix.pm,v 1.6 2005/07/20 13:44:13 mchapman Exp $
 #
 
 use strict;
@@ -9,7 +9,7 @@ use Carp::Clan qw(^Net::CDP);
 
 use vars qw($VERSION);
 
-$VERSION = (qw$Revision: 1.4 $)[1];
+$VERSION = (qw$Revision: 1.6 $)[1];
 
 use Net::CDP;
 
@@ -78,7 +78,7 @@ sub new($$;$) {
 		croak "Cannot parse IP prefix '$_[0]'";
 	}
 	$network &= pack 'B32', 1 x $length;
-	return $class->_new($network, $length);
+	Net::CDP::_rethrow { $class->_new($network, $length) };
 }
 
 =item B<clone>
@@ -151,7 +151,7 @@ Michael Chapman, E<lt>cpan@very.puzzling.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2004 by Michael Chapman
+Copyright (C) 2005 by Michael Chapman
 
 libcdp is released under the terms and conditions of the GNU Library General
 Public License version 2. Net::CDP may be redistributed and/or modified under

@@ -1,11 +1,15 @@
 noinst_LIBRARIES = libcdp.a
 
-libcdp_a_CPPFLAGS = $(LIBPCAP_CPPFLAGS) $(LIBNET_CPPFLAGS)
+libcdp_a_CPPFLAGS = $(LIBPCAP_CPPFLAGS) $(LIBNET_CPPFLAGS) -I$(top_srcdir)/lib
 libcdp_a_SOURCES = \
+	address.c \
+	appliance.c \
 	cdp.c cdp.h \
-	cdp_address.c \
-	cdp_checksum.c cdp_checksum.h \
-	cdp_encoding.c cdp_encoding.h \
-	cdp_ip_prefix.c \
-	cdp_llist.c \
-	cdp_packet.c
+	checksum.c checksum.h \
+	encoding.c encoding.h \
+	ip_prefix.c \
+	llist.c \
+	packet.c \
+	system.h
+
+AUTOMAKE_OPTIONS = $(top_builddir)/lib/ansi2knr

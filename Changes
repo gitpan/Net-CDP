@@ -1,6 +1,23 @@
 Revision history for Net::CDP
 =============================
 
+*** 0.08 Thu Jul 21 2004
+
+Fixed "decode errors" bug, where the packet after the error would return the
+decoding error instead.
+
+Added power consumption and management addresses TLVs. Experiment support
+for Appliance ID Query fields (deliberately not documented yet!).
+
+Use Gnulib so that libcdp can be built on wacky platforms.
+
+Cleaned up XS layer. Sanitized memory handling in the C layer.
+
+Munge internal croaks properly -- errors should always appear to come
+from the caller now.
+
+Various other minor bugfixes.
+
 *** 0.07 Tue Sep 2 2004
 
 Use Carp::Clan to manage error messages.
@@ -57,4 +74,4 @@ Initial released version.
 
 Original version (unreleased).
 
-$Id: Changes,v 1.20 2004/09/02 11:51:48 mchapman Exp $
+$Id: Changes,v 1.23 2005/07/21 12:27:39 mchapman Exp $

@@ -1,16 +1,13 @@
 /*
- * $Id: cdp.h,v 1.1 2004/09/02 04:25:06 mchapman Exp $
+ * $Id: cdp.h,v 1.3 2005/07/20 13:44:13 mchapman Exp $
  */
 
 #ifndef _CDP_H
 #define _CDP_H
 
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE
-#endif /* _GNU_SOURCE */
-
-#include <pcap.h>
-#include <libnet.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <netinet/in.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -34,18 +31,19 @@ typedef void (*cdp_free_fn_t)(void *);
 /*
  * Opaque container for a linked list node.
  */
-typedef struct _cdp_llist_item_t {
-	struct _cdp_llist_item_t *next;
+typedef struct _cdp_llist_item {
+	struct _cdp_llist_item *next;
 	void *x;
 } cdp_llist_item_t;
 
 /*
- * Opaque linked list.
+ * Opaque linked list. Items on a linked list must have a "void *next"
+ * member.
  */
 typedef struct {
 	cdp_dup_fn_t dup_fn;
 	cdp_free_fn_t free_fn;
-	u_int32_t count;
+	uint32_t count;
 	
 	cdp_llist_item_t *head;
 	cdp_llist_item_t *tail;
@@ -61,21 +59,19 @@ typedef struct {
  *
  * Similarly, cdp_llist_free deeply frees the llist using the cdp_free_fn_t
  * provided when the llist was created.
- *
- * cdp_llist_append appends a *copy* of the element (using the cdp_dup_fn_t).
- * Don't supply a copy or you'll get memory leaks.
  */
 cdp_llist_t * cdp_llist_new(cdp_dup_fn_t, cdp_free_fn_t);
 cdp_llist_t * cdp_llist_dup(const cdp_llist_t *);
-void cdp_llist_append(cdp_llist_t *, const void *);
+void cdp_llist_append(cdp_llist_t *, void *);
+void cdp_llist_transfer(cdp_llist_t *, cdp_llist_t *);
 void cdp_llist_free(cdp_llist_t *);
 
-#define cdp_llist_count(LLIST) ((const u_int32_t)((LLIST)->count))
+#define cdp_llist_count(LLIST) ((const uint32_t)((LLIST)->count))
 
 /*
  * Linked list iterator.
  *
- * void frobnicate(void *);
+ * void frobnicate(item_t *);
  *
  * void frobnicate_all(const cdp_llist_t *llist) {
  *     cdp_llist_iter_t iter;
@@ -92,19 +88,6 @@ typedef const cdp_llist_item_t *cdp_llist_iter_t;
 /******************************************************************************/
 
 /*
- * cdp_new flags.
- */
-#define CDP_PROMISCUOUS        0x01
-#define CDP_DISABLE_RECV       0x02
-#define CDP_DISABLE_SEND       0x04
-
-/*
- * cdp_recv flags.
- */
-#define CDP_RECV_NONBLOCK      0x01
-#define CDP_RECV_DECODE_ERRORS 0x02
-
-/*
  * Get a list of strings representing available ports.
  */
 cdp_llist_t * cdp_get_ports(char *);
@@ -112,30 +95,7 @@ cdp_llist_t * cdp_get_ports(char *);
 /*
  * Opaque CDP listener/advertiser object.
  */
-typedef struct cdp {
-	pcap_t *pcap;
-	libnet_t *libnet;
-	
-	int flags;
-	
-	char *port;
-	u_int8_t mac[6];
-	cdp_llist_t *addresses;
-	u_int8_t *duplex;
-	
-	const struct pcap_pkthdr *header;
-	const u_int8_t *data;
-} cdp_t;
-
-cdp_t * cdp_new(const char *, int, char *);
-void cdp_free(cdp_t *);
-
-const char * cdp_get_port(cdp_t *);
-const cdp_llist_t * cdp_get_addresses(cdp_t *);
-int cdp_get_fd(cdp_t *);
-
-struct cdp_packet * cdp_recv(cdp_t *, int, char *);
-int cdp_send(cdp_t *, const struct cdp_packet *, char *);
+typedef struct _cdp cdp_t;
 
 /******************************************************************************/
 
@@ -154,22 +114,28 @@ int cdp_send(cdp_t *, const struct cdp_packet *, char *);
 
 #define CDP_ADDR_PROTO_MAX       CDP_ADDR_PROTO_APOLLO
 
-extern u_int8_t cdp_address_protocol_type[];
-extern u_int8_t cdp_address_protocol_length[];
-extern u_int8_t cdp_address_protocol[][8];
+struct cdp_predef {
+	uint8_t protocol_type;
+	uint8_t protocol_length;
+	void *protocol;
+};
+
+extern struct cdp_predef cdp_predefs[];
 
 /*
  * CDP address object.
  */
 struct cdp_address {
-	u_int8_t protocol_type;
-	u_int8_t protocol_length;
-	u_int8_t *protocol;
-	u_int16_t address_length;
-	u_int8_t *address;
+	uint8_t protocol_type;
+	uint8_t protocol_length;
+	void *protocol;
+	uint16_t address_length;
+	void *address;
 };
 
-struct cdp_address * cdp_address_new(u_int8_t, u_int8_t, const u_int8_t *, u_int16_t, const u_int8_t *);
+struct cdp_address * cdp_address_new(
+	uint8_t, uint8_t, const void *, uint8_t, const void *
+);
 struct cdp_address * cdp_address_dup(const struct cdp_address *);
 void cdp_address_free(struct cdp_address *);
 
@@ -179,13 +145,24 @@ void cdp_address_free(struct cdp_address *);
  * CDP IP Prefix object.
  */
 struct cdp_ip_prefix {
-	u_int8_t network[4];
-	u_int8_t length;
+	struct in_addr network;
+	uint8_t length;
 };
 
-struct cdp_ip_prefix * cdp_ip_prefix_new(const u_int8_t *, u_int8_t);
+struct cdp_ip_prefix * cdp_ip_prefix_new(struct in_addr, uint8_t);
 struct cdp_ip_prefix * cdp_ip_prefix_dup(const struct cdp_ip_prefix *);
 void cdp_ip_prefix_free(struct cdp_ip_prefix *);
+
+/******************************************************************************/
+
+struct cdp_appliance {
+	uint8_t id;
+	uint16_t vlan;
+};
+
+struct cdp_appliance * cdp_appliance_new(uint8_t, uint16_t);
+struct cdp_appliance * cdp_appliance_dup(const struct cdp_appliance *);
+void cdp_appliance_free(struct cdp_appliance *);
 
 /******************************************************************************/
 
@@ -199,11 +176,6 @@ void cdp_ip_prefix_free(struct cdp_ip_prefix *);
 #define CDP_CAP_HOST               0x10
 #define CDP_CAP_IGMP               0x20
 #define CDP_CAP_REPEATER           0x40
-
-struct cdp_appliance {
-	u_int8_t id;
-	u_int16_t vlan;
-};
 
 /*
  * CDP packet.
@@ -224,42 +196,67 @@ struct cdp_appliance {
  * the device used by that object.
  */
 struct cdp_packet {
-	u_int8_t *packet;
-	u_int16_t packet_length;
+	void *packet;
+	uint16_t packet_length;
 
-	u_int8_t version;
-	u_int8_t ttl;
-	u_int16_t checksum;
+	uint8_t version;
+	uint8_t ttl;
+	uint16_t checksum;
 	char *device_id;
 	cdp_llist_t *addresses;
 	char *port_id;
-	u_int32_t capabilities;
+	uint32_t *capabilities;
 	char *ios_version;
 	char *platform;
 	cdp_llist_t *ip_prefixes;
 	char *vtp_mgmt_domain;
-	u_int16_t *native_vlan;
-	u_int8_t *duplex;
+	uint16_t *native_vlan;
+	uint8_t *duplex;
 	struct cdp_appliance *appliance;
-/*
-	FIXME -- see cdp_encoding.c
-	u_int32_t *power_consumption;
-*/
-	u_int32_t *mtu;
-	u_int8_t *extended_trust;
-	u_int8_t *untrusted_cos;
+	struct cdp_appliance *appliance_query;
+	uint16_t *power_consumption;
+	uint32_t *mtu;
+	uint8_t *extended_trust;
+	uint8_t *untrusted_cos;
+	cdp_llist_t *mgmt_addresses;
 };
 
-struct cdp_packet * cdp_packet_generate(const cdp_t *, char *);
+struct cdp_packet * cdp_packet_generate(const cdp_t *);
 struct cdp_packet * cdp_packet_dup(const struct cdp_packet *);
 void cdp_packet_free(struct cdp_packet *);
 
 /*
  * Update the packet, packet_length and checksum fields. You'll need to
- * call this before sending the packet, otherwise it will send the old still
+ * call this before sending the packet, otherwise it will send the old data
  * stored in packet.
  */
 int cdp_packet_update(struct cdp_packet *, char *);
+
+/******************************************************************************/
+
+/*
+ * cdp_new flags.
+ */
+#define CDP_PROMISCUOUS        0x01
+#define CDP_DISABLE_RECV       0x02
+#define CDP_DISABLE_SEND       0x04
+
+/*
+ * cdp_recv flags.
+ */
+#define CDP_RECV_NONBLOCK      0x01
+#define CDP_RECV_DECODE_ERRORS 0x02
+
+cdp_t * cdp_new(const char *, int, char *);
+void cdp_free(cdp_t *);
+
+const char * cdp_get_port(const cdp_t *);
+const cdp_llist_t * cdp_get_addresses(const cdp_t *);
+const uint8_t * cdp_get_duplex(const cdp_t *);
+int cdp_get_fd(const cdp_t *);
+
+struct cdp_packet * cdp_recv(cdp_t *, int, char *);
+int cdp_send(cdp_t *, const struct cdp_packet *, char *);
 
 #ifdef __cplusplus
 }

@@ -1,7 +1,7 @@
 package Net::CDP;
 
 #
-# $Id: CDP.pm,v 1.17 2004/09/02 05:42:58 mchapman Exp $
+# $Id: CDP.pm,v 1.19 2005/07/20 13:44:13 mchapman Exp $
 #
 
 use 5.00503;
@@ -10,8 +10,8 @@ use Carp::Clan qw(^Net::CDP);
 
 use vars qw($VERSION $XS_VERSION @ISA $AUTOLOAD @EXPORT @EXPORT_OK %EXPORT_TAGS @EXPORT_FAIL);
 
-$VERSION = (qw$Revision: 1.17 $)[1];
-$XS_VERSION = '0.07'; # XXX Keep this in sync with libcdp
+$VERSION = (qw$Revision: 1.19 $)[1];
+$XS_VERSION = '0.08'; # XXX Keep this in sync with libcdp
 
 require Exporter;
 require DynaLoader;
@@ -189,6 +189,25 @@ sub _v6_unpack {
 	$result;
 }
 
+sub _rethrow(&) {
+	my $sub = shift;
+	if (wantarray) {
+		my @result = eval { &$sub };
+		if ($@) {
+			$@ =~ s/ at \S+ line \d+\.\n\z//;
+			croak $@;
+		}
+		@result;
+	} else {
+		my $result = eval { &$sub };
+		if ($@) {
+			$@ =~ s/ at \S+ line \d+\.\n\z//;
+			croak $@;
+		}
+		$result;
+	}
+}
+
 =head1 NAME
 
 Net::CDP - Cisco Discovery Protocol (CDP) advertiser/listener
@@ -294,7 +313,7 @@ sub new($;@) {
 	carp "enable_recv => 0 and enable_send => 0 both specified"
 		if $flags & CDP_DISABLE_RECV() and $flags & CDP_DISABLE_SEND();
 	
-	$class->_new($port, $flags);
+	_rethrow { $class->_new($port, $flags) };
 }
 
 =head1 CLASS METHODS
@@ -308,6 +327,10 @@ sub new($;@) {
 Returns a list of network ports that can be used by this module.
 
 =back
+
+=cut
+
+sub ports() { _rethrow { _ports(); } }
 
 =head1 OBJECT METHODS
 
@@ -363,7 +386,7 @@ sub recv($;@) {
 	$flags |= CDP_RECV_NONBLOCK() if $args{nonblock};
 	$flags |= CDP_RECV_DECODE_ERRORS() if  $args{decode_errors};
 	
-	$self->_recv($flags);
+	_rethrow { $self->_recv($flags) };
 }
 
 =item B<send>
@@ -388,7 +411,7 @@ sub send($;@) {
 	
 	croak 'No packet supplied' unless defined $packet;
 	
-	$self->_send($packet);
+	_rethrow { $self->_send($packet) };
 }
 
 =head1 UPGRADING FROM PREVIOUS VERSIONS
@@ -426,7 +449,7 @@ Michael Chapman, E<lt>cpan@very.puzzling.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2004 by Michael Chapman
+Copyright (C) 2005 by Michael Chapman
 
 libcdp is released under the terms and conditions of the GNU Library General
 Public License version 2. Net::CDP may be redistributed and/or modified under
