@@ -1,7 +1,7 @@
-noinst_LIBRARIES = libcdp.a
+noinst_LTLIBRARIES = libcdp.la
 
-libcdp_a_CPPFLAGS = $(LIBPCAP_CPPFLAGS) $(LIBNET_CPPFLAGS) -I$(top_srcdir)/lib
-libcdp_a_SOURCES = \
+libcdp_la_CPPFLAGS = $(LIBPCAP_CPPFLAGS) $(LIBNET_CPPFLAGS) -I$(top_srcdir)/lib
+libcdp_la_SOURCES = \
 	address.c \
 	appliance.c \
 	cdp.c cdp.h \
@@ -11,5 +11,6 @@ libcdp_a_SOURCES = \
 	llist.c \
 	packet.c \
 	system.h
+libcdp_la_LIBADD = $(LIBPCAP_LIBS) $(LIBNET_LIBS)
 
 AUTOMAKE_OPTIONS = $(top_builddir)/lib/ansi2knr

@@ -40,6 +40,8 @@ libcdp/lib/strerror.c
 libcdp/lib/xalloc-die.c
 libcdp/lib/xalloc.h
 libcdp/lib/xmalloc.c
+libcdp/libtool
+libcdp/ltmain.sh
 libcdp/m4/calloc.m4
 libcdp/m4/error.m4
 libcdp/m4/exitfail.m4

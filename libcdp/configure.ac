@@ -1,6 +1,6 @@
 # Process this file with autoconf to produce a configure script.
 
-AC_INIT([libcdp], [0.08], [libcdp@very.puzzling.org])
+AC_INIT([libcdp], [0.09], [libcdp@very.puzzling.org])
 AC_CONFIG_SRCDIR([src/cdp.c])
 AC_CONFIG_HEADER([config.h])
 AM_INIT_AUTOMAKE([-Wall std-options])
@@ -16,8 +16,13 @@ gl_LIB([libmisc])
 # Checks for programs.
 AC_PROG_CC
 AM_PROG_CC_C_O
+
+# Yes, I'm building a static library, but the code will be used in a
+# shared library...
+AM_DISABLE_STATIC
+
+AM_PROG_LIBTOOL
 gl_EARLY
-AC_PROG_RANLIB
 
 # Checks for libraries.
 MAC_LIB_PCAP

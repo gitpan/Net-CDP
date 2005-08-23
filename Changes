@@ -1,7 +1,13 @@
 Revision history for Net::CDP
 =============================
 
-*** 0.08 Thu Jul 21 2004
+*** 0.09 Tue Aug 16 2005
+
+Resync libcdp with Gnulib.
+
+libtoolize libcdp.
+
+*** 0.08 Thu Jul 21 2005
 
 Fixed "decode errors" bug, where the packet after the error would return the
 decoding error instead.
@@ -74,4 +80,4 @@ Initial released version.
 
 Original version (unreleased).
 
-$Id: Changes,v 1.23 2005/07/21 12:27:39 mchapman Exp $
+$Id: Changes,v 1.26 2005/08/16 11:52:30 mchapman Exp $

@@ -14,7 +14,7 @@
 
 @SET_MAKE@
 
-SOURCES = $(libcdp_a_SOURCES)
+SOURCES = $(libcdp_la_SOURCES)
 
 srcdir = @srcdir@
 top_srcdir = @top_srcdir@
@@ -36,6 +36,8 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
+build_triplet = @build@
+host_triplet = @host@
 ANSI2KNR = $(top_builddir)/lib/ansi2knr
 subdir = src
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
@@ -53,26 +55,27 @@ am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/config.h
 CONFIG_CLEAN_FILES =
-LIBRARIES = $(noinst_LIBRARIES)
-AR = ar
-ARFLAGS = cru
-libcdp_a_AR = $(AR) $(ARFLAGS)
-libcdp_a_LIBADD =
-am_libcdp_a_OBJECTS = libcdp_a-address$U.$(OBJEXT) \
-	libcdp_a-appliance$U.$(OBJEXT) libcdp_a-cdp$U.$(OBJEXT) \
-	libcdp_a-checksum$U.$(OBJEXT) libcdp_a-encoding$U.$(OBJEXT) \
-	libcdp_a-ip_prefix$U.$(OBJEXT) libcdp_a-llist$U.$(OBJEXT) \
-	libcdp_a-packet$U.$(OBJEXT)
-libcdp_a_OBJECTS = $(am_libcdp_a_OBJECTS)
+LTLIBRARIES = $(noinst_LTLIBRARIES)
+am__DEPENDENCIES_1 =
+libcdp_la_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+am_libcdp_la_OBJECTS = libcdp_la-address$U.lo libcdp_la-appliance$U.lo \
+	libcdp_la-cdp$U.lo libcdp_la-checksum$U.lo \
+	libcdp_la-encoding$U.lo libcdp_la-ip_prefix$U.lo \
+	libcdp_la-llist$U.lo libcdp_la-packet$U.lo
+libcdp_la_OBJECTS = $(am_libcdp_la_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
+LTCOMPILE = $(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) \
+	$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
+	$(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
-LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-SOURCES = $(libcdp_a_SOURCES)
-DIST_SOURCES = $(libcdp_a_SOURCES)
+LINK = $(LIBTOOL) --tag=CC --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(AM_LDFLAGS) $(LDFLAGS) -o $@
+SOURCES = $(libcdp_la_SOURCES)
+DIST_SOURCES = $(libcdp_la_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -80,6 +83,7 @@ ACLOCAL = @ACLOCAL@
 AMDEP_FALSE = @AMDEP_FALSE@
 AMDEP_TRUE = @AMDEP_TRUE@
 AMTAR = @AMTAR@
+AR = @AR@
 AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
@@ -89,14 +93,21 @@ CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
+CXX = @CXX@
+CXXCPP = @CXXCPP@
+CXXDEPMODE = @CXXDEPMODE@
+CXXFLAGS = @CXXFLAGS@
 CYGPATH_W = @CYGPATH_W@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
+ECHO = @ECHO@
 ECHO_C = @ECHO_C@
 ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
 EGREP = @EGREP@
 EXEEXT = @EXEEXT@
+F77 = @F77@
+FFLAGS = @FFLAGS@
 HAVE_LONG_64BIT = @HAVE_LONG_64BIT@
 HAVE_LONG_LONG_64BIT = @HAVE_LONG_LONG_64BIT@
 INSTALL_DATA = @INSTALL_DATA@
@@ -112,6 +123,8 @@ LIBPCAP_CPPFLAGS = @LIBPCAP_CPPFLAGS@
 LIBPCAP_LDFLAGS = @LIBPCAP_LDFLAGS@
 LIBPCAP_LIBS = @LIBPCAP_LIBS@
 LIBS = @LIBS@
+LIBTOOL = @LIBTOOL@
+LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
 MAKEINFO = @MAKEINFO@
 OBJEXT = @OBJEXT@
@@ -129,21 +142,34 @@ STDINT_H = @STDINT_H@
 STRIP = @STRIP@
 U = @U@
 VERSION = @VERSION@
+ac_ct_AR = @ac_ct_AR@
 ac_ct_CC = @ac_ct_CC@
+ac_ct_CXX = @ac_ct_CXX@
+ac_ct_F77 = @ac_ct_F77@
 ac_ct_RANLIB = @ac_ct_RANLIB@
 ac_ct_STRIP = @ac_ct_STRIP@
 am__fastdepCC_FALSE = @am__fastdepCC_FALSE@
 am__fastdepCC_TRUE = @am__fastdepCC_TRUE@
+am__fastdepCXX_FALSE = @am__fastdepCXX_FALSE@
+am__fastdepCXX_TRUE = @am__fastdepCXX_TRUE@
 am__include = @am__include@
 am__leading_dot = @am__leading_dot@
 am__quote = @am__quote@
 am__tar = @am__tar@
 am__untar = @am__untar@
 bindir = @bindir@
+build = @build@
 build_alias = @build_alias@
+build_cpu = @build_cpu@
+build_os = @build_os@
+build_vendor = @build_vendor@
 datadir = @datadir@
 exec_prefix = @exec_prefix@
+host = @host@
 host_alias = @host_alias@
+host_cpu = @host_cpu@
+host_os = @host_os@
+host_vendor = @host_vendor@
 includedir = @includedir@
 infodir = @infodir@
 install_sh = @install_sh@
@@ -159,9 +185,9 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-noinst_LIBRARIES = libcdp.a
-libcdp_a_CPPFLAGS = $(LIBPCAP_CPPFLAGS) $(LIBNET_CPPFLAGS) -I$(top_srcdir)/lib
-libcdp_a_SOURCES = \
+noinst_LTLIBRARIES = libcdp.la
+libcdp_la_CPPFLAGS = $(LIBPCAP_CPPFLAGS) $(LIBNET_CPPFLAGS) -I$(top_srcdir)/lib
+libcdp_la_SOURCES = \
 	address.c \
 	appliance.c \
 	cdp.c cdp.h \
@@ -172,11 +198,12 @@ libcdp_a_SOURCES = \
 	packet.c \
 	system.h
 
+libcdp_la_LIBADD = $(LIBPCAP_LIBS) $(LIBNET_LIBS)
 AUTOMAKE_OPTIONS = $(top_builddir)/lib/ansi2knr
 all: all-am
 
 .SUFFIXES:
-.SUFFIXES: .c .o .obj
+.SUFFIXES: .c .lo .o .obj
 $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
@@ -207,12 +234,16 @@ $(top_srcdir)/configure:  $(am__configure_deps)
 $(ACLOCAL_M4):  $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 
-clean-noinstLIBRARIES:
-	-test -z "$(noinst_LIBRARIES)" || rm -f $(noinst_LIBRARIES)
-libcdp.a: $(libcdp_a_OBJECTS) $(libcdp_a_DEPENDENCIES) 
-	-rm -f libcdp.a
-	$(libcdp_a_AR) libcdp.a $(libcdp_a_OBJECTS) $(libcdp_a_LIBADD)
-	$(RANLIB) libcdp.a
+clean-noinstLTLIBRARIES:
+	-test -z "$(noinst_LTLIBRARIES)" || rm -f $(noinst_LTLIBRARIES)
+	@list='$(noinst_LTLIBRARIES)'; for p in $$list; do \
+	  dir="`echo $$p | sed -e 's|/[^/]*$$||'`"; \
+	  test "$$dir" != "$$p" || dir=.; \
+	  echo "rm -f \"$${dir}/so_locations\""; \
+	  rm -f "$${dir}/so_locations"; \
+	done
+libcdp.la: $(libcdp_la_OBJECTS) $(libcdp_la_DEPENDENCIES) 
+	$(LINK)  $(libcdp_la_LDFLAGS) $(libcdp_la_OBJECTS) $(libcdp_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -225,14 +256,14 @@ $(top_builddir)/lib/ansi2knr:
 mostlyclean-kr:
 	-test "$U" = "" || rm -f *_.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libcdp_a-address$U.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libcdp_a-appliance$U.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libcdp_a-cdp$U.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libcdp_a-checksum$U.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libcdp_a-encoding$U.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libcdp_a-ip_prefix$U.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libcdp_a-llist$U.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libcdp_a-packet$U.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libcdp_la-address$U.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libcdp_la-appliance$U.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libcdp_la-cdp$U.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libcdp_la-checksum$U.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libcdp_la-encoding$U.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libcdp_la-ip_prefix$U.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libcdp_la-llist$U.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libcdp_la-packet$U.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	if $(COMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
@@ -248,117 +279,68 @@ mostlyclean-kr:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(COMPILE) -c `$(CYGPATH_W) '$<'`
 
-libcdp_a-address$U.o: address$U.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libcdp_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libcdp_a-address$U.o -MD -MP -MF "$(DEPDIR)/libcdp_a-address$U.Tpo" -c -o libcdp_a-address$U.o `test -f 'address$U.c' || echo '$(srcdir)/'`address$U.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libcdp_a-address$U.Tpo" "$(DEPDIR)/libcdp_a-address$U.Po"; else rm -f "$(DEPDIR)/libcdp_a-address$U.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='address$U.c' object='libcdp_a-address$U.o' libtool=no @AMDEPBACKSLASH@
+.c.lo:
+@am__fastdepCC_TRUE@	if $(LTCOMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/$*.Tpo" "$(DEPDIR)/$*.Plo"; else rm -f "$(DEPDIR)/$*.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libcdp_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libcdp_a-address$U.o `test -f 'address$U.c' || echo '$(srcdir)/'`address$U.c
+@am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
 
-libcdp_a-address$U.obj: address$U.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libcdp_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libcdp_a-address$U.obj -MD -MP -MF "$(DEPDIR)/libcdp_a-address$U.Tpo" -c -o libcdp_a-address$U.obj `if test -f 'address$U.c'; then $(CYGPATH_W) 'address$U.c'; else $(CYGPATH_W) '$(srcdir)/address$U.c'; fi`; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libcdp_a-address$U.Tpo" "$(DEPDIR)/libcdp_a-address$U.Po"; else rm -f "$(DEPDIR)/libcdp_a-address$U.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='address$U.c' object='libcdp_a-address$U.obj' libtool=no @AMDEPBACKSLASH@
+libcdp_la-address$U.lo: address$U.c
+@am__fastdepCC_TRUE@	if $(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libcdp_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libcdp_la-address$U.lo -MD -MP -MF "$(DEPDIR)/libcdp_la-address$U.Tpo" -c -o libcdp_la-address$U.lo `test -f 'address$U.c' || echo '$(srcdir)/'`address$U.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libcdp_la-address$U.Tpo" "$(DEPDIR)/libcdp_la-address$U.Plo"; else rm -f "$(DEPDIR)/libcdp_la-address$U.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='address$U.c' object='libcdp_la-address$U.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libcdp_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libcdp_a-address$U.obj `if test -f 'address$U.c'; then $(CYGPATH_W) 'address$U.c'; else $(CYGPATH_W) '$(srcdir)/address$U.c'; fi`
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libcdp_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libcdp_la-address$U.lo `test -f 'address$U.c' || echo '$(srcdir)/'`address$U.c
 
-libcdp_a-appliance$U.o: appliance$U.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libcdp_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libcdp_a-appliance$U.o -MD -MP -MF "$(DEPDIR)/libcdp_a-appliance$U.Tpo" -c -o libcdp_a-appliance$U.o `test -f 'appliance$U.c' || echo '$(srcdir)/'`appliance$U.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libcdp_a-appliance$U.Tpo" "$(DEPDIR)/libcdp_a-appliance$U.Po"; else rm -f "$(DEPDIR)/libcdp_a-appliance$U.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='appliance$U.c' object='libcdp_a-appliance$U.o' libtool=no @AMDEPBACKSLASH@
+libcdp_la-appliance$U.lo: appliance$U.c
+@am__fastdepCC_TRUE@	if $(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libcdp_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libcdp_la-appliance$U.lo -MD -MP -MF "$(DEPDIR)/libcdp_la-appliance$U.Tpo" -c -o libcdp_la-appliance$U.lo `test -f 'appliance$U.c' || echo '$(srcdir)/'`appliance$U.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libcdp_la-appliance$U.Tpo" "$(DEPDIR)/libcdp_la-appliance$U.Plo"; else rm -f "$(DEPDIR)/libcdp_la-appliance$U.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='appliance$U.c' object='libcdp_la-appliance$U.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libcdp_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libcdp_a-appliance$U.o `test -f 'appliance$U.c' || echo '$(srcdir)/'`appliance$U.c
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libcdp_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libcdp_la-appliance$U.lo `test -f 'appliance$U.c' || echo '$(srcdir)/'`appliance$U.c
 
-libcdp_a-appliance$U.obj: appliance$U.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libcdp_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libcdp_a-appliance$U.obj -MD -MP -MF "$(DEPDIR)/libcdp_a-appliance$U.Tpo" -c -o libcdp_a-appliance$U.obj `if test -f 'appliance$U.c'; then $(CYGPATH_W) 'appliance$U.c'; else $(CYGPATH_W) '$(srcdir)/appliance$U.c'; fi`; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libcdp_a-appliance$U.Tpo" "$(DEPDIR)/libcdp_a-appliance$U.Po"; else rm -f "$(DEPDIR)/libcdp_a-appliance$U.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='appliance$U.c' object='libcdp_a-appliance$U.obj' libtool=no @AMDEPBACKSLASH@
+libcdp_la-cdp$U.lo: cdp$U.c
+@am__fastdepCC_TRUE@	if $(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libcdp_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libcdp_la-cdp$U.lo -MD -MP -MF "$(DEPDIR)/libcdp_la-cdp$U.Tpo" -c -o libcdp_la-cdp$U.lo `test -f 'cdp$U.c' || echo '$(srcdir)/'`cdp$U.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libcdp_la-cdp$U.Tpo" "$(DEPDIR)/libcdp_la-cdp$U.Plo"; else rm -f "$(DEPDIR)/libcdp_la-cdp$U.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='cdp$U.c' object='libcdp_la-cdp$U.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libcdp_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libcdp_a-appliance$U.obj `if test -f 'appliance$U.c'; then $(CYGPATH_W) 'appliance$U.c'; else $(CYGPATH_W) '$(srcdir)/appliance$U.c'; fi`
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libcdp_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libcdp_la-cdp$U.lo `test -f 'cdp$U.c' || echo '$(srcdir)/'`cdp$U.c
 
-libcdp_a-cdp$U.o: cdp$U.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libcdp_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libcdp_a-cdp$U.o -MD -MP -MF "$(DEPDIR)/libcdp_a-cdp$U.Tpo" -c -o libcdp_a-cdp$U.o `test -f 'cdp$U.c' || echo '$(srcdir)/'`cdp$U.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libcdp_a-cdp$U.Tpo" "$(DEPDIR)/libcdp_a-cdp$U.Po"; else rm -f "$(DEPDIR)/libcdp_a-cdp$U.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='cdp$U.c' object='libcdp_a-cdp$U.o' libtool=no @AMDEPBACKSLASH@
+libcdp_la-checksum$U.lo: checksum$U.c
+@am__fastdepCC_TRUE@	if $(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libcdp_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libcdp_la-checksum$U.lo -MD -MP -MF "$(DEPDIR)/libcdp_la-checksum$U.Tpo" -c -o libcdp_la-checksum$U.lo `test -f 'checksum$U.c' || echo '$(srcdir)/'`checksum$U.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libcdp_la-checksum$U.Tpo" "$(DEPDIR)/libcdp_la-checksum$U.Plo"; else rm -f "$(DEPDIR)/libcdp_la-checksum$U.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='checksum$U.c' object='libcdp_la-checksum$U.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libcdp_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libcdp_a-cdp$U.o `test -f 'cdp$U.c' || echo '$(srcdir)/'`cdp$U.c
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libcdp_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libcdp_la-checksum$U.lo `test -f 'checksum$U.c' || echo '$(srcdir)/'`checksum$U.c
 
-libcdp_a-cdp$U.obj: cdp$U.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libcdp_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libcdp_a-cdp$U.obj -MD -MP -MF "$(DEPDIR)/libcdp_a-cdp$U.Tpo" -c -o libcdp_a-cdp$U.obj `if test -f 'cdp$U.c'; then $(CYGPATH_W) 'cdp$U.c'; else $(CYGPATH_W) '$(srcdir)/cdp$U.c'; fi`; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libcdp_a-cdp$U.Tpo" "$(DEPDIR)/libcdp_a-cdp$U.Po"; else rm -f "$(DEPDIR)/libcdp_a-cdp$U.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='cdp$U.c' object='libcdp_a-cdp$U.obj' libtool=no @AMDEPBACKSLASH@
+libcdp_la-encoding$U.lo: encoding$U.c
+@am__fastdepCC_TRUE@	if $(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libcdp_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libcdp_la-encoding$U.lo -MD -MP -MF "$(DEPDIR)/libcdp_la-encoding$U.Tpo" -c -o libcdp_la-encoding$U.lo `test -f 'encoding$U.c' || echo '$(srcdir)/'`encoding$U.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libcdp_la-encoding$U.Tpo" "$(DEPDIR)/libcdp_la-encoding$U.Plo"; else rm -f "$(DEPDIR)/libcdp_la-encoding$U.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='encoding$U.c' object='libcdp_la-encoding$U.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libcdp_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libcdp_a-cdp$U.obj `if test -f 'cdp$U.c'; then $(CYGPATH_W) 'cdp$U.c'; else $(CYGPATH_W) '$(srcdir)/cdp$U.c'; fi`
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libcdp_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libcdp_la-encoding$U.lo `test -f 'encoding$U.c' || echo '$(srcdir)/'`encoding$U.c
 
-libcdp_a-checksum$U.o: checksum$U.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libcdp_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libcdp_a-checksum$U.o -MD -MP -MF "$(DEPDIR)/libcdp_a-checksum$U.Tpo" -c -o libcdp_a-checksum$U.o `test -f 'checksum$U.c' || echo '$(srcdir)/'`checksum$U.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libcdp_a-checksum$U.Tpo" "$(DEPDIR)/libcdp_a-checksum$U.Po"; else rm -f "$(DEPDIR)/libcdp_a-checksum$U.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='checksum$U.c' object='libcdp_a-checksum$U.o' libtool=no @AMDEPBACKSLASH@
+libcdp_la-ip_prefix$U.lo: ip_prefix$U.c
+@am__fastdepCC_TRUE@	if $(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libcdp_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libcdp_la-ip_prefix$U.lo -MD -MP -MF "$(DEPDIR)/libcdp_la-ip_prefix$U.Tpo" -c -o libcdp_la-ip_prefix$U.lo `test -f 'ip_prefix$U.c' || echo '$(srcdir)/'`ip_prefix$U.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libcdp_la-ip_prefix$U.Tpo" "$(DEPDIR)/libcdp_la-ip_prefix$U.Plo"; else rm -f "$(DEPDIR)/libcdp_la-ip_prefix$U.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='ip_prefix$U.c' object='libcdp_la-ip_prefix$U.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libcdp_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libcdp_a-checksum$U.o `test -f 'checksum$U.c' || echo '$(srcdir)/'`checksum$U.c
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libcdp_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libcdp_la-ip_prefix$U.lo `test -f 'ip_prefix$U.c' || echo '$(srcdir)/'`ip_prefix$U.c
 
-libcdp_a-checksum$U.obj: checksum$U.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libcdp_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libcdp_a-checksum$U.obj -MD -MP -MF "$(DEPDIR)/libcdp_a-checksum$U.Tpo" -c -o libcdp_a-checksum$U.obj `if test -f 'checksum$U.c'; then $(CYGPATH_W) 'checksum$U.c'; else $(CYGPATH_W) '$(srcdir)/checksum$U.c'; fi`; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libcdp_a-checksum$U.Tpo" "$(DEPDIR)/libcdp_a-checksum$U.Po"; else rm -f "$(DEPDIR)/libcdp_a-checksum$U.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='checksum$U.c' object='libcdp_a-checksum$U.obj' libtool=no @AMDEPBACKSLASH@
+libcdp_la-llist$U.lo: llist$U.c
+@am__fastdepCC_TRUE@	if $(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libcdp_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libcdp_la-llist$U.lo -MD -MP -MF "$(DEPDIR)/libcdp_la-llist$U.Tpo" -c -o libcdp_la-llist$U.lo `test -f 'llist$U.c' || echo '$(srcdir)/'`llist$U.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libcdp_la-llist$U.Tpo" "$(DEPDIR)/libcdp_la-llist$U.Plo"; else rm -f "$(DEPDIR)/libcdp_la-llist$U.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='llist$U.c' object='libcdp_la-llist$U.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libcdp_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libcdp_a-checksum$U.obj `if test -f 'checksum$U.c'; then $(CYGPATH_W) 'checksum$U.c'; else $(CYGPATH_W) '$(srcdir)/checksum$U.c'; fi`
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libcdp_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libcdp_la-llist$U.lo `test -f 'llist$U.c' || echo '$(srcdir)/'`llist$U.c
 
-libcdp_a-encoding$U.o: encoding$U.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libcdp_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libcdp_a-encoding$U.o -MD -MP -MF "$(DEPDIR)/libcdp_a-encoding$U.Tpo" -c -o libcdp_a-encoding$U.o `test -f 'encoding$U.c' || echo '$(srcdir)/'`encoding$U.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libcdp_a-encoding$U.Tpo" "$(DEPDIR)/libcdp_a-encoding$U.Po"; else rm -f "$(DEPDIR)/libcdp_a-encoding$U.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='encoding$U.c' object='libcdp_a-encoding$U.o' libtool=no @AMDEPBACKSLASH@
+libcdp_la-packet$U.lo: packet$U.c
+@am__fastdepCC_TRUE@	if $(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libcdp_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libcdp_la-packet$U.lo -MD -MP -MF "$(DEPDIR)/libcdp_la-packet$U.Tpo" -c -o libcdp_la-packet$U.lo `test -f 'packet$U.c' || echo '$(srcdir)/'`packet$U.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libcdp_la-packet$U.Tpo" "$(DEPDIR)/libcdp_la-packet$U.Plo"; else rm -f "$(DEPDIR)/libcdp_la-packet$U.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='packet$U.c' object='libcdp_la-packet$U.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libcdp_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libcdp_a-encoding$U.o `test -f 'encoding$U.c' || echo '$(srcdir)/'`encoding$U.c
-
-libcdp_a-encoding$U.obj: encoding$U.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libcdp_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libcdp_a-encoding$U.obj -MD -MP -MF "$(DEPDIR)/libcdp_a-encoding$U.Tpo" -c -o libcdp_a-encoding$U.obj `if test -f 'encoding$U.c'; then $(CYGPATH_W) 'encoding$U.c'; else $(CYGPATH_W) '$(srcdir)/encoding$U.c'; fi`; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libcdp_a-encoding$U.Tpo" "$(DEPDIR)/libcdp_a-encoding$U.Po"; else rm -f "$(DEPDIR)/libcdp_a-encoding$U.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='encoding$U.c' object='libcdp_a-encoding$U.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libcdp_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libcdp_a-encoding$U.obj `if test -f 'encoding$U.c'; then $(CYGPATH_W) 'encoding$U.c'; else $(CYGPATH_W) '$(srcdir)/encoding$U.c'; fi`
-
-libcdp_a-ip_prefix$U.o: ip_prefix$U.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libcdp_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libcdp_a-ip_prefix$U.o -MD -MP -MF "$(DEPDIR)/libcdp_a-ip_prefix$U.Tpo" -c -o libcdp_a-ip_prefix$U.o `test -f 'ip_prefix$U.c' || echo '$(srcdir)/'`ip_prefix$U.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libcdp_a-ip_prefix$U.Tpo" "$(DEPDIR)/libcdp_a-ip_prefix$U.Po"; else rm -f "$(DEPDIR)/libcdp_a-ip_prefix$U.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='ip_prefix$U.c' object='libcdp_a-ip_prefix$U.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libcdp_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libcdp_a-ip_prefix$U.o `test -f 'ip_prefix$U.c' || echo '$(srcdir)/'`ip_prefix$U.c
-
-libcdp_a-ip_prefix$U.obj: ip_prefix$U.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libcdp_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libcdp_a-ip_prefix$U.obj -MD -MP -MF "$(DEPDIR)/libcdp_a-ip_prefix$U.Tpo" -c -o libcdp_a-ip_prefix$U.obj `if test -f 'ip_prefix$U.c'; then $(CYGPATH_W) 'ip_prefix$U.c'; else $(CYGPATH_W) '$(srcdir)/ip_prefix$U.c'; fi`; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libcdp_a-ip_prefix$U.Tpo" "$(DEPDIR)/libcdp_a-ip_prefix$U.Po"; else rm -f "$(DEPDIR)/libcdp_a-ip_prefix$U.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='ip_prefix$U.c' object='libcdp_a-ip_prefix$U.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libcdp_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libcdp_a-ip_prefix$U.obj `if test -f 'ip_prefix$U.c'; then $(CYGPATH_W) 'ip_prefix$U.c'; else $(CYGPATH_W) '$(srcdir)/ip_prefix$U.c'; fi`
-
-libcdp_a-llist$U.o: llist$U.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libcdp_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libcdp_a-llist$U.o -MD -MP -MF "$(DEPDIR)/libcdp_a-llist$U.Tpo" -c -o libcdp_a-llist$U.o `test -f 'llist$U.c' || echo '$(srcdir)/'`llist$U.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libcdp_a-llist$U.Tpo" "$(DEPDIR)/libcdp_a-llist$U.Po"; else rm -f "$(DEPDIR)/libcdp_a-llist$U.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='llist$U.c' object='libcdp_a-llist$U.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libcdp_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libcdp_a-llist$U.o `test -f 'llist$U.c' || echo '$(srcdir)/'`llist$U.c
-
-libcdp_a-llist$U.obj: llist$U.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libcdp_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libcdp_a-llist$U.obj -MD -MP -MF "$(DEPDIR)/libcdp_a-llist$U.Tpo" -c -o libcdp_a-llist$U.obj `if test -f 'llist$U.c'; then $(CYGPATH_W) 'llist$U.c'; else $(CYGPATH_W) '$(srcdir)/llist$U.c'; fi`; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libcdp_a-llist$U.Tpo" "$(DEPDIR)/libcdp_a-llist$U.Po"; else rm -f "$(DEPDIR)/libcdp_a-llist$U.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='llist$U.c' object='libcdp_a-llist$U.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libcdp_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libcdp_a-llist$U.obj `if test -f 'llist$U.c'; then $(CYGPATH_W) 'llist$U.c'; else $(CYGPATH_W) '$(srcdir)/llist$U.c'; fi`
-
-libcdp_a-packet$U.o: packet$U.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libcdp_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libcdp_a-packet$U.o -MD -MP -MF "$(DEPDIR)/libcdp_a-packet$U.Tpo" -c -o libcdp_a-packet$U.o `test -f 'packet$U.c' || echo '$(srcdir)/'`packet$U.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libcdp_a-packet$U.Tpo" "$(DEPDIR)/libcdp_a-packet$U.Po"; else rm -f "$(DEPDIR)/libcdp_a-packet$U.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='packet$U.c' object='libcdp_a-packet$U.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libcdp_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libcdp_a-packet$U.o `test -f 'packet$U.c' || echo '$(srcdir)/'`packet$U.c
-
-libcdp_a-packet$U.obj: packet$U.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libcdp_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libcdp_a-packet$U.obj -MD -MP -MF "$(DEPDIR)/libcdp_a-packet$U.Tpo" -c -o libcdp_a-packet$U.obj `if test -f 'packet$U.c'; then $(CYGPATH_W) 'packet$U.c'; else $(CYGPATH_W) '$(srcdir)/packet$U.c'; fi`; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libcdp_a-packet$U.Tpo" "$(DEPDIR)/libcdp_a-packet$U.Po"; else rm -f "$(DEPDIR)/libcdp_a-packet$U.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='packet$U.c' object='libcdp_a-packet$U.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libcdp_a_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libcdp_a-packet$U.obj `if test -f 'packet$U.c'; then $(CYGPATH_W) 'packet$U.c'; else $(CYGPATH_W) '$(srcdir)/packet$U.c'; fi`
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libcdp_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libcdp_la-packet$U.lo `test -f 'packet$U.c' || echo '$(srcdir)/'`packet$U.c
 address_.c: address.c $(ANSI2KNR)
 	$(CPP) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) `if test -f $(srcdir)/address.c; then echo $(srcdir)/address.c; else echo address.c; fi` | sed 's/^# \([0-9]\)/#line \1/' | $(ANSI2KNR) > $@ || rm -f $@
 appliance_.c: appliance.c $(ANSI2KNR)
@@ -375,9 +357,19 @@ llist_.c: llist.c $(ANSI2KNR)
 	$(CPP) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) `if test -f $(srcdir)/llist.c; then echo $(srcdir)/llist.c; else echo llist.c; fi` | sed 's/^# \([0-9]\)/#line \1/' | $(ANSI2KNR) > $@ || rm -f $@
 packet_.c: packet.c $(ANSI2KNR)
 	$(CPP) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) `if test -f $(srcdir)/packet.c; then echo $(srcdir)/packet.c; else echo packet.c; fi` | sed 's/^# \([0-9]\)/#line \1/' | $(ANSI2KNR) > $@ || rm -f $@
-address_.$(OBJEXT) appliance_.$(OBJEXT) cdp_.$(OBJEXT) \
-checksum_.$(OBJEXT) encoding_.$(OBJEXT) ip_prefix_.$(OBJEXT) \
-llist_.$(OBJEXT) packet_.$(OBJEXT) : $(ANSI2KNR)
+address_.$(OBJEXT) address_.lo appliance_.$(OBJEXT) appliance_.lo \
+cdp_.$(OBJEXT) cdp_.lo checksum_.$(OBJEXT) checksum_.lo \
+encoding_.$(OBJEXT) encoding_.lo ip_prefix_.$(OBJEXT) ip_prefix_.lo \
+llist_.$(OBJEXT) llist_.lo packet_.$(OBJEXT) packet_.lo : $(ANSI2KNR)
+
+mostlyclean-libtool:
+	-rm -f *.lo
+
+clean-libtool:
+	-rm -rf .libs _libs
+
+distclean-libtool:
+	-rm -f libtool
 uninstall-info-am:
 
 ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
@@ -457,7 +449,7 @@ distdir: $(DISTFILES)
 	done
 check-am: all-am
 check: check-am
-all-am: Makefile $(LIBRARIES)
+all-am: Makefile $(LTLIBRARIES)
 installdirs:
 install: install-am
 install-exec: install-exec-am
@@ -485,13 +477,14 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-am
 
-clean-am: clean-generic clean-noinstLIBRARIES mostlyclean-am
+clean-am: clean-generic clean-libtool clean-noinstLTLIBRARIES \
+	mostlyclean-am
 
 distclean: distclean-am
 	-rm -rf ./$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
-	distclean-tags
+	distclean-libtool distclean-tags
 
 dvi: dvi-am
 
@@ -520,7 +513,8 @@ maintainer-clean-am: distclean-am maintainer-clean-generic
 
 mostlyclean: mostlyclean-am
 
-mostlyclean-am: mostlyclean-compile mostlyclean-generic mostlyclean-kr
+mostlyclean-am: mostlyclean-compile mostlyclean-generic mostlyclean-kr \
+	mostlyclean-libtool
 
 pdf: pdf-am
 
@@ -533,15 +527,16 @@ ps-am:
 uninstall-am: uninstall-info-am
 
 .PHONY: CTAGS GTAGS all all-am check check-am clean clean-generic \
-	clean-noinstLIBRARIES ctags distclean distclean-compile \
-	distclean-generic distclean-tags distdir dvi dvi-am html \
-	html-am info info-am install install-am install-data \
-	install-data-am install-exec install-exec-am install-info \
-	install-info-am install-man install-strip installcheck \
-	installcheck-am installdirs maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-compile \
-	mostlyclean-generic mostlyclean-kr pdf pdf-am ps ps-am tags \
-	uninstall uninstall-am uninstall-info-am
+	clean-libtool clean-noinstLTLIBRARIES ctags distclean \
+	distclean-compile distclean-generic distclean-libtool \
+	distclean-tags distdir dvi dvi-am html html-am info info-am \
+	install install-am install-data install-data-am install-exec \
+	install-exec-am install-info install-info-am install-man \
+	install-strip installcheck installcheck-am installdirs \
+	maintainer-clean maintainer-clean-generic mostlyclean \
+	mostlyclean-compile mostlyclean-generic mostlyclean-kr \
+	mostlyclean-libtool pdf pdf-am ps ps-am tags uninstall \
+	uninstall-am uninstall-info-am
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

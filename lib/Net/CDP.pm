@@ -1,7 +1,7 @@
 package Net::CDP;
 
 #
-# $Id: CDP.pm,v 1.19 2005/07/20 13:44:13 mchapman Exp $
+# $Id: CDP.pm,v 1.20 2005/08/16 11:52:30 mchapman Exp $
 #
 
 use 5.00503;
@@ -10,8 +10,8 @@ use Carp::Clan qw(^Net::CDP);
 
 use vars qw($VERSION $XS_VERSION @ISA $AUTOLOAD @EXPORT @EXPORT_OK %EXPORT_TAGS @EXPORT_FAIL);
 
-$VERSION = (qw$Revision: 1.19 $)[1];
-$XS_VERSION = '0.08'; # XXX Keep this in sync with libcdp
+$VERSION = (qw$Revision: 1.20 $)[1];
+$XS_VERSION = '0.09'; # XXX Keep this in sync with libcdp
 
 require Exporter;
 require DynaLoader;

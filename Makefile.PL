@@ -64,7 +64,7 @@ WriteMakefile(
 	) : ()),
 	INC          => "@config{qw(LIBPCAP_CPPFLAGS LIBNET_CPPFLAGS)}",
 	LIBS         => [ "@config{qw(LIBPCAP_LDFLAGS LIBPCAP_LIBS LIBNET_LDFLAGS LIBNET_LIBS)}" ],
-	MYEXTLIB     => 'libcdp/src/libcdp.a libcdp/lib/libmisc.a',
+	MYEXTLIB     => 'libcdp/src/.libs/libcdp.a libcdp/lib/.libs/libmisc.a',
 );
 
 if (eval { require ExtUtils::Constant; 1 }) {
